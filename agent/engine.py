@@ -5,6 +5,9 @@ import re
 from dotenv import load_dotenv
 from openai import OpenAI, BadRequestError
 from agent.tools import web_search, scrape_webpage, TOOL_DEFINITIONS
+import trafilatura
+import tiktoken
+from rank_bm25 import BM25Okapi
 
 load_dotenv()
 
@@ -37,6 +40,43 @@ def execute_tool(func_name: str, args: dict):
         return scrape_webpage(url=url)
     else:
         return f"Error: Unknown tool {func_name}"
+
+def extract_main_content(html_content: str) -> str:
+    extracted = trafilatura.extract(
+        html_content, 
+        include_links=True, 
+        include_tables=True,
+        output_format="markdown"
+    )
+    return extracted or ""
+
+def truncate_to_tokens(text: str, max_tokens: int = 2000, model: str = "gpt-4o") -> str:
+    encoder = tiktoken.encoding_for_model(model)
+    tokens = encoder.encode(text)
+    
+    if len(tokens) <= max_tokens:
+        return text
+        
+    truncated_tokens = tokens[:max_tokens]
+    truncated_text = encoder.decode(truncated_tokens)
+    
+    last_newline = truncated_text.rfind("\n")
+    if last_newline > 0:
+        return truncated_text[:last_newline] + "\n\n[...Content Truncated...]"
+    return truncated_text + " [...Content Truncated...]"
+
+def get_relevant_chunks(scraped_text: str, query: str, top_k: int = 3) -> str:
+    paragraphs = [p.strip() for p in scraped_text.split("\n\n") if len(p.strip()) > 50]
+    if not paragraphs:
+        return scraped_text[:3000]
+        
+    tokenized_corpus = [p.lower().split() for p in paragraphs]
+    bm25 = BM25Okapi(tokenized_corpus)
+    
+    tokenized_query = query.lower().split()
+    top_paragraphs = bm25.get_top_n(tokenized_query, paragraphs, n=top_k)
+    
+    return "\n\n---\n\n".join(top_paragraphs)
 
 
 def run_agent_loop(user_prompt: str, max_iterations: int = 5):
@@ -110,5 +150,7 @@ def run_agent_loop(user_prompt: str, max_iterations: int = 5):
 
             # Re-raise if unrecoverable
             raise e
+
+    
 
     return "Agent reached maximum iteration limit without completing the request."
