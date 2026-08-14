@@ -1,0 +1,39 @@
+/* src/components/ResearchForm.css */
+.research-form {
+    display: flex;
+    gap: 12px;
+    margin-bottom: 24px;
+}
+
+.research-input {
+    flex: 1;
+    background-color: var(--bg-secondary);
+    border: 1px solid var(--border-color);
+    border-radius: 10px;
+    padding: 14px 18px;
+    color: var(--text-main);
+    font-size: 1rem;
+    outline: none;
+    transition: border-color 0.2s;
+}
+
+.research-input:focus {
+    border-color: var(--accent-blue);
+}
+
+.submit-btn {
+    background-color: var(--accent-blue);
+    color: #fff;
+    border: none;
+    border-radius: 10px;
+    padding: 0 24px;
+    font-weight: 600;
+    font-size: 0.95rem;
+    cursor: pointer;
+    transition: opacity 0.2s;
+}
+
+.submit-btn:disabled {
+    opacity: 0.5;
+    cursor: not-allowed;
+}

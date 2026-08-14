@@ -1,0 +1,94 @@
+/* client/src/components/ReportView.css */
+.report-card {
+    background-color: var(--bg-secondary);
+    border: 1px solid var(--border-color);
+    border-radius: 12px;
+    padding: 28px;
+    line-height: 1.6;
+}
+
+.report-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    margin-bottom: 20px;
+    padding-bottom: 16px;
+    border-bottom: 1px solid var(--border-color);
+}
+
+.report-title {
+    color: var(--accent-blue);
+    font-size: 1.3rem;
+    margin: 0;
+}
+
+.export-actions {
+    display: flex;
+    gap: 10px;
+}
+
+.export-btn {
+    background-color: var(--bg-card);
+    border: 1px solid var(--border-color);
+    color: var(--text-main);
+    padding: 8px 14px;
+    border-radius: 8px;
+    font-size: 0.85rem;
+    font-weight: 500;
+    cursor: pointer;
+    transition: all 0.2s;
+    display: flex;
+    align-items: center;
+    gap: 6px;
+}
+
+.export-btn:hover {
+    background-color: var(--border-color);
+    color: #fff;
+}
+
+.export-btn.primary {
+    background-color: var(--accent-blue);
+    border-color: var(--accent-blue);
+    color: #fff;
+}
+
+.export-btn.primary:hover {
+    opacity: 0.9;
+}
+
+.report-body {
+    color: var(--text-main);
+}
+
+.report-card h1,
+.report-card h2,
+.report-card h3 {
+    margin-top: 18px;
+    margin-bottom: 12px;
+}
+
+.report-card p {
+    margin-bottom: 12px;
+    color: #cbd5e1;
+}
+
+.report-card ul,
+.report-card ol {
+    margin-left: 20px;
+    margin-bottom: 12px;
+}
+
+.report-card a,
+.report-link {
+    color: var(--accent-blue);
+    text-decoration: underline;
+    text-underline-offset: 3px;
+    font-weight: 500;
+    transition: color 0.2s;
+}
+
+.report-card a:hover,
+.report-link:hover {
+    color: #60a5fa;
+}
