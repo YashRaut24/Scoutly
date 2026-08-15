@@ -1,0 +1,91 @@
+/* Container */
+.status-indicator {
+    display: inline-flex;
+    align-items: center;
+    gap: 12px;
+    padding: 8px 16px;
+    border-radius: 9999px;
+    background-color: #0f172a;
+    border: 1px solid #1e293b;
+    margin-bottom: 20px;
+    box-shadow: 0 4px 12px rgba(0, 0, 0, 0.2);
+    transition: all 0.3s ease;
+}
+
+.status-icon-wrapper {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+}
+
+.status-icon {
+    width: 18px;
+    height: 18px;
+}
+
+.status-text-container {
+    display: flex;
+    flex-direction: column;
+}
+
+.status-phase-title {
+    font-size: 10px;
+    font-weight: 700;
+    text-transform: uppercase;
+    letter-spacing: 0.05em;
+    color: #94a3b8;
+}
+
+.status-message-text {
+    font-size: 13px;
+    font-weight: 500;
+    color: #f8fafc;
+}
+
+/* Phase Variant Colors & Animations */
+.phase-initializing .status-icon {
+    color: #3b82f6;
+    animation: status-spin 1.5s linear infinite;
+}
+
+.phase-searching .status-icon {
+    color: #f59e0b;
+    animation: status-pulse-glow 1.2s ease-in-out infinite alternate;
+}
+
+.phase-reading .status-icon {
+    color: #a855f7;
+    animation: status-pulse-glow 1.2s ease-in-out infinite alternate;
+}
+
+.phase-optimizing .status-icon {
+    color: #6366f1;
+    animation: status-spin 2s linear infinite;
+}
+
+.phase-complete .status-icon {
+    color: #10b981;
+}
+
+/* Keyframe Animations */
+@keyframes status-spin {
+    from {
+        transform: rotate(0deg);
+    }
+
+    to {
+        transform: rotate(360deg);
+    }
+}
+
+@keyframes status-pulse-glow {
+    from {
+        opacity: 0.6;
+        transform: scale(0.95);
+    }
+
+    to {
+        opacity: 1;
+        transform: scale(1.05);
+    }
+}
