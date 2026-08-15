@@ -1,16 +1,34 @@
+// src/App.jsx
 import React, { useState, useEffect } from 'react';
 import './App.css';
 import HistorySidebar from './components/HistorySidebar';
 import ResearchForm from './components/ResearchForm';
-import StreamLogs from './components/StreamLogs';
 import ReportView from './components/ReportView';
+import StatusIndicator from './components/StatusIndicator';
+import ThemeToggle from './components/ThemeToggle';
 
 export default function App() {
+  // 1. Initialize theme state from localStorage or default to 'dark'
+  const [theme, setTheme] = useState(() => {
+    return localStorage.getItem('theme') || 'dark';
+  });
+
   const [query, setQuery] = useState('');
   const [isSearching, setIsSearching] = useState(false);
-  const [logs, setLogs] = useState([]);
+  const [currentStatus, setCurrentStatus] = useState(null);
   const [report, setReport] = useState('');
+  const [activeReportId, setActiveReportId] = useState(null);
   const [history, setHistory] = useState([]);
+
+  // 2. Sync dataset attribute on document root whenever theme changes
+  useEffect(() => {
+    document.documentElement.setAttribute('data-theme', theme);
+    localStorage.setItem('theme', theme);
+  }, [theme]);
+
+  const toggleTheme = () => {
+    setTheme((prev) => (prev === 'dark' ? 'light' : 'dark'));
+  };
 
   useEffect(() => {
     fetchHistory();
@@ -35,50 +53,87 @@ export default function App() {
       });
       if (res.ok) {
         setHistory((prev) => prev.filter((item) => item._id !== id));
+        if (activeReportId === id) {
+          setActiveReportId(null);
+          setReport('');
+        }
       }
     } catch (err) {
       console.error('Failed to delete history:', err);
     }
   };
 
+  const handleTogglePin = async (id) => {
+    try {
+      const res = await fetch(`http://localhost:5000/api/history/${id}/pin`, {
+        method: 'PATCH'
+      });
+      if (res.ok) {
+        const updatedItem = await res.json();
+        setHistory((prev) =>
+          prev.map((item) => (item._id === id ? updatedItem : item))
+        );
+      }
+    } catch (err) {
+      console.error('Failed to toggle pin state:', err);
+    }
+  };
+
   const handleStartResearch = async (prompt) => {
     setQuery(prompt);
     setIsSearching(true);
-    setLogs([{ type: 'system', text: 'Initializing ReAct Research Agent...' }]);
+    setActiveReportId(null);
+    setCurrentStatus({ phase: 'initializing', message: 'Initializing research workspace...' });
     setReport('');
 
     try {
-      const response = await fetch('http://localhost:8000/api/research', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ prompt })
-      });
+      const response = await fetch(`http://localhost:8000/api/research/stream?query=${encodeURIComponent(prompt)}`);
 
       const reader = response.body.getReader();
       const decoder = new TextDecoder();
+      let buffer = '';
+      let accumulatedReport = '';
 
       while (true) {
         const { value, done } = await reader.read();
         if (done) break;
 
-        const chunk = decoder.decode(value);
-        const lines = chunk.split('\n');
+        buffer += decoder.decode(value, { stream: true });
+        const lines = buffer.split('\n\n');
+        buffer = lines.pop() || '';
 
         for (const line of lines) {
-          if (line.startsWith('data: ')) {
-            const data = JSON.parse(line.replace('data: ', ''));
+          const trimmedLine = line.trim();
+          if (trimmedLine.startsWith('data: ')) {
+            const rawJson = trimmedLine.replace('data: ', '');
+            try {
+              const data = JSON.parse(rawJson);
 
-            if (data.type === 'status') {
-              setLogs((prev) => [...prev, { type: 'system', text: data.content }]);
-            } else if (data.type === 'final') {
-              setReport(data.content);
-              await saveToHistory(prompt, data.content);
+              if (data.type === 'status') {
+                setCurrentStatus({ phase: data.phase, message: data.message });
+              } else if (data.type === 'content' && data.delta) {
+                accumulatedReport += data.delta;
+                setReport(accumulatedReport);
+              } else if (data.type === 'final' || data.phase === 'complete') {
+                if (data.content) accumulatedReport = data.content;
+                setCurrentStatus({ phase: 'complete', message: 'Research complete.' });
+              }
+            } catch (err) {
+              console.error('Failed to parse SSE line:', rawJson, err);
             }
           }
         }
       }
+
+      if (accumulatedReport) {
+        const saved = await saveToHistory(prompt, accumulatedReport);
+        if (saved && saved._id) {
+          setActiveReportId(saved._id);
+        }
+      }
     } catch (error) {
-      setLogs((prev) => [...prev, { type: 'system', text: `Error: ${error.message}` }]);
+      console.error('Research error:', error);
+      setCurrentStatus(null);
     } finally {
       setIsSearching(false);
     }
@@ -86,16 +141,24 @@ export default function App() {
 
   const saveToHistory = async (queryStr, reportStr) => {
     try {
-      await fetch('http://localhost:5000/api/history', {
+      const res = await fetch('http://localhost:5000/api/history', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ query: queryStr, report: reportStr })
       });
-      fetchHistory();
+      if (res.ok) {
+        const savedItem = await res.json();
+        fetchHistory();
+        return savedItem;
+      }
     } catch (err) {
       console.error('Failed to save history:', err);
     }
+    return null;
   };
+
+  const activeItem = history.find((item) => item._id === activeReportId);
+  const isCurrentPinned = activeItem ? activeItem.isPinned : false;
 
   return (
     <div className="app-container">
@@ -104,22 +167,34 @@ export default function App() {
         onSelectReport={(item) => {
           setQuery(item.query);
           setReport(item.report);
-          setLogs([]);
+          setActiveReportId(item._id);
+          setCurrentStatus(null);
         }}
         onDeleteReport={handleDeleteHistory}
+        onTogglePin={handleTogglePin}
       />
 
       <main className="main-workspace">
         <header className="workspace-header">
-          <h1 className="workspace-title">Scoutly Agent</h1>
-          <p className="workspace-subtitle">Autonomous Web Research Engine</p>
+          <div>
+            <h1 className="workspace-title">Scoutly Agent</h1>
+            <p className="workspace-subtitle">Autonomous Web Research Engine</p>
+          </div>
+          <ThemeToggle theme={theme} onToggle={toggleTheme} />
         </header>
 
         <ResearchForm onSubmit={handleStartResearch} isLoading={isSearching} />
 
-        {logs.length > 0 && <StreamLogs logs={logs} isSearching={isSearching} />}
+        <StatusIndicator status={currentStatus} />
 
-        {report && <ReportView query={query} content={report} />}
+        {report && (
+          <ReportView
+            query={query}
+            content={report}
+            isPinned={isCurrentPinned}
+            onTogglePin={activeReportId ? () => handleTogglePin(activeReportId) : null}
+          />
+        )}
       </main>
     </div>
   );
