@@ -17,9 +17,16 @@ mongoose
 
 // 2. Define History Schema & Model
 const historySchema = new mongoose.Schema({
-  query: { type: String, required: true },
-  report: { type: String, required: true },
-  createdAt: { type: Date, default: Date.now }
+  query: String,
+  report: String,
+  isPinned: {
+    type: Boolean,
+    default: false
+  },
+  createdAt: {
+    type: Date,
+    default: Date.now
+  }
 });
 
 const History = mongoose.model('History', historySchema);
@@ -37,11 +44,36 @@ app.get('/api/history', async (req, res) => {
 });
 
 // POST save search history
-app.post('/api/history', async (req, res) => {
+app.patch('/api/history/:id/pin', async (req, res) => {
   try {
-    const { query, report } = req.body;
-    const newEntry = await History.create({ query, report });
-    res.status(201).json(newEntry);
+    const item = await History.findById(req.params.id);
+    if (!item) return res.status(404).json({ error: 'Not found' });
+
+    // Toggle pin state
+    const updated = await History.findByIdAndUpdate(
+      req.params.id,
+      { isPinned: !item.isPinned },
+      { new: true } // Return updated document
+    );
+
+    res.json(updated);
+  } catch (err) {
+    res.status(500).json({ error: err.message });
+  }
+});
+
+app.patch('/api/history/:id/pin', async (req, res) => {
+  try {
+    const item = await History.findById(req.params.id);
+    if (!item) return res.status(404).json({ error: 'Not found' });
+
+    const updated = await History.findByIdAndUpdate(
+      req.params.id,
+      { isPinned: !item.isPinned },
+      { new: true }
+    );
+
+    res.json(updated);
   } catch (err) {
     res.status(500).json({ error: err.message });
   }
