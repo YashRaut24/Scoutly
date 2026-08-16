@@ -78,17 +78,53 @@ def get_relevant_chunks(scraped_text: str, query: str, top_k: int = 3) -> str:
     
     return "\n\n---\n\n".join(top_paragraphs)
 
+QUICK_SUMMARY_PROMPT = """
+You are Scoutly, an agile research assistant. 
+Your goal is to provide a concise, high-level summary of the topic.
 
-def run_agent_loop(user_prompt: str, max_iterations: int = 5):
-    """Runs the autonomous ReAct research loop for a given user query."""
+Guidelines:
+- Perform 1 targeted search if needed.
+- Keep the final report brief (300-500 words).
+- Focus only on core facts, main takeaways, and a quick summary.
+"""
+
+DEEP_DIVE_PROMPT = """
+You are Scoutly, a thorough autonomous web research engineer. 
+Your goal is to conduct an in-depth, exhaustive research report on the topic.
+
+Guidelines:
+- Execute multiple diverse search queries to cover different angles, edge cases, and current developments.
+- Dive deep into technical details, statistics, comparisons, pros/cons, and real-world context.
+- Format the output as a comprehensive, multi-section markdown report:
+  1. Executive Summary
+  2. Background & Architecture / Context
+  3. Key Findings & Detailed Analysis
+  4. Comparison / Pros & Cons (if applicable)
+  5. Future Outlook & Conclusion
+- Aim for an extensive, highly detailed document (1200+ words).
+"""
+
+def get_system_prompt(depth: str) -> str:
+    return DEEP_DIVE_PROMPT if depth == "deep_dive" else QUICK_SUMMARY_PROMPT
+
+def run_agent_loop(user_prompt: str, depth: str = "quick"):
+    """Runs the autonomous ReAct research loop with dynamic depth controls."""
+    
+    # 1. Set iteration count & system instructions based on depth
+    if depth == "deep_dive":
+        max_iterations = 10
+    else:
+        max_iterations = 3
+
+    system_instruction = get_system_prompt(depth)
+
     messages = [
-        {"role": "system", "content": SYSTEM_PROMPT},
-        {"role": "user", "content": user_prompt}
+        {"role": "system", "content": system_instruction},
+        {"role": "user", "content": f"Research topic ({depth.upper()} mode): {user_prompt}"}
     ]
 
     for iteration in range(1, max_iterations + 1):
-        print(f"\n--- [AGENT ITERATION {iteration}/{max_iterations}] ---")
-
+        print(f"\n--- [AGENT ITERATION {iteration}/{max_iterations}] (Depth: {depth}) ---")
         try:
             response = client.chat.completions.create(
                 model=MODEL,
@@ -101,7 +137,6 @@ def run_agent_loop(user_prompt: str, max_iterations: int = 5):
             msg = response.choices[0].message
             messages.append(msg)
 
-            # Native tool execution path
             if msg.tool_calls:
                 for tool_call in msg.tool_calls:
                     func_name = tool_call.function.name
@@ -120,11 +155,9 @@ def run_agent_loop(user_prompt: str, max_iterations: int = 5):
                         "content": json.dumps(result) if isinstance(result, (dict, list)) else str(result)
                     })
             else:
-                # Final research response reached
                 return msg.content
 
         except BadRequestError as e:
-            # Fallback recovery: extract raw function call from error string
             err_str = str(e)
             match = re.search(r"<function=(\w+)\s*({.*?})(?:</function>|>)?", err_str, re.DOTALL)
 
@@ -132,10 +165,7 @@ def run_agent_loop(user_prompt: str, max_iterations: int = 5):
                 func_name, args_json = match.groups()
                 try:
                     args = json.loads(args_json)
-                    print(f"[ENGINE] Recovered tool call from Groq error payload: {func_name}")
                     result = execute_tool(func_name, args)
-
-                    # Append synthetic message sequence to keep context flowing
                     messages.append({
                         "role": "assistant",
                         "content": f"Calling tool `{func_name}` with parameters: {json.dumps(args)}"
@@ -147,10 +177,6 @@ def run_agent_loop(user_prompt: str, max_iterations: int = 5):
                     continue
                 except json.JSONDecodeError:
                     pass
-
-            # Re-raise if unrecoverable
             raise e
-
-    
 
     return "Agent reached maximum iteration limit without completing the request."
