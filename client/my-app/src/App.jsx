@@ -6,13 +6,14 @@ import ResearchForm from './components/ResearchForm';
 import ReportView from './components/ReportView';
 import StatusIndicator from './components/StatusIndicator';
 import ThemeToggle from './components/ThemeToggle';
+import ScoutlyBot from './components/ScoutlyBot';
 
 export default function App() {
-  // 1. Initialize theme state from localStorage or default to 'dark'
   const [theme, setTheme] = useState(() => {
     return localStorage.getItem('theme') || 'dark';
   });
 
+  const [isBotOpen, setIsBotOpen] = useState(false);
   const [query, setQuery] = useState('');
   const [isSearching, setIsSearching] = useState(false);
   const [currentStatus, setCurrentStatus] = useState(null);
@@ -20,7 +21,6 @@ export default function App() {
   const [activeReportId, setActiveReportId] = useState(null);
   const [history, setHistory] = useState([]);
 
-  // 2. Sync dataset attribute on document root whenever theme changes
   useEffect(() => {
     document.documentElement.setAttribute('data-theme', theme);
     localStorage.setItem('theme', theme);
@@ -79,70 +79,69 @@ export default function App() {
     }
   };
 
-// src/App.jsx (Updated handleStartResearch)
+  const handleStartResearch = async (prompt, depth = 'quick') => {
+    setQuery(prompt);
+    setIsSearching(true);
+    setActiveReportId(null);
+    const depthLabel = depth === 'quick' ? 'Quick Summary' : 'Deep Dive';
+    setCurrentStatus({ phase: 'initializing', message: `Initializing research (${depthLabel})...` });
+    setReport('');
 
-const handleStartResearch = async (prompt, depth = 'quick') => {
-  setQuery(prompt);
-  setIsSearching(true);
-  setActiveReportId(null);
-  const depthLabel = depth === 'quick' ? 'Quick Summary' : 'Deep Dive';
-  setCurrentStatus({ phase: 'initializing', message: `Initializing research (${depthLabel})...` });
-  setReport('');
+    try {
+      const response = await fetch(
+        `http://localhost:8000/api/research/stream?query=${encodeURIComponent(prompt)}&depth=${encodeURIComponent(depth)}`
+      );
 
-  try {
-    const response = await fetch(
-      `http://localhost:8000/api/research/stream?query=${encodeURIComponent(prompt)}&depth=${encodeURIComponent(depth)}`
-    );
+      const reader = response.body.getReader();
+      const decoder = new TextDecoder();
+      let buffer = '';
+      let accumulatedReport = '';
 
-    const reader = response.body.getReader();
-    const decoder = new TextDecoder();
-    let buffer = '';
-    let accumulatedReport = '';
+      while (true) {
+        const { value, done } = await reader.read();
+        if (done) break;
 
-    while (true) {
-      const { value, done } = await reader.read();
-      if (done) break;
+        buffer += decoder.decode(value, { stream: true });
+        const lines = buffer.split('\n\n');
+        buffer = lines.pop() || '';
 
-      buffer += decoder.decode(value, { stream: true });
-      const lines = buffer.split('\n\n');
-      buffer = lines.pop() || '';
+        for (const line of lines) {
+          const trimmedLine = line.trim();
+          if (trimmedLine.startsWith('data: ')) {
+            const rawJson = trimmedLine.replace('data: ', '');
+            try {
+              const data = JSON.parse(rawJson);
 
-      for (const line of lines) {
-        const trimmedLine = line.trim();
-        if (trimmedLine.startsWith('data: ')) {
-          const rawJson = trimmedLine.replace('data: ', '');
-          try {
-            const data = JSON.parse(rawJson);
-
-            if (data.type === 'status') {
-              setCurrentStatus({ phase: data.phase, message: data.message });
-            } else if (data.type === 'content' && data.delta) {
-              accumulatedReport += data.delta;
-              setReport(accumulatedReport);
-            } else if (data.type === 'final' || data.phase === 'complete') {
-              if (data.content) accumulatedReport = data.content;
-              setCurrentStatus({ phase: 'complete', message: 'Research complete.' });
+              if (data.type === 'status') {
+                setCurrentStatus({ phase: data.phase, message: data.message });
+              } else if (data.type === 'content' && data.delta) {
+                accumulatedReport += data.delta;
+                setReport(accumulatedReport);
+              } else if (data.type === 'final' || data.phase === 'complete') {
+                if (data.content) accumulatedReport = data.content;
+                setCurrentStatus({ phase: 'complete', message: 'Research complete.' });
+              }
+            } catch (err) {
+              console.error('Failed to parse SSE line:', rawJson, err);
             }
-          } catch (err) {
-            console.error('Failed to parse SSE line:', rawJson, err);
           }
         }
       }
-    }
 
-    if (accumulatedReport) {
-      const saved = await saveToHistory(prompt, accumulatedReport, depth);
-      if (saved && saved._id) {
-        setActiveReportId(saved._id);
+      if (accumulatedReport) {
+        const saved = await saveToHistory(prompt, accumulatedReport, depth);
+        if (saved && saved._id) {
+          setActiveReportId(saved._id);
+        }
       }
+    } catch (error) {
+      console.error('Research error:', error);
+      setCurrentStatus(null);
+    } finally {
+      setIsSearching(false);
     }
-  } catch (error) {
-    console.error('Research error:', error);
-    setCurrentStatus(null);
-  } finally {
-    setIsSearching(false);
-  }
-};
+  };
+
   const saveToHistory = async (queryText, reportText, depth = 'quick') => {
     try {
       const res = await fetch('http://localhost:5000/api/history', {
@@ -159,10 +158,7 @@ const handleStartResearch = async (prompt, depth = 'quick') => {
       if (!res.ok) throw new Error('Failed to save history item');
 
       const savedItem = await res.json();
-
-      // UPDATE LOCAL STATE IMMEDIATELY FOR SIDEBAR RE-RENDER
       setHistory((prev) => [savedItem, ...prev]);
-
       return savedItem;
     } catch (err) {
       console.error('Error saving to history:', err);
@@ -188,15 +184,22 @@ const handleStartResearch = async (prompt, depth = 'quick') => {
       />
 
       <main className="main-workspace">
-        <header className="workspace-header">
-          <div>
-            <h1 className="workspace-title">Scoutly Agent</h1>
-            <p className="workspace-subtitle">Autonomous Web Research Engine</p>
-          </div>
-          <ThemeToggle theme={theme} onToggle={toggleTheme} />
-        </header>
+        <div className="top-bar">
+          <header className="workspace-header">
+            <div>
+              <h1 className="workspace-title">Scoutly Agent</h1>
+              <p className="workspace-subtitle">Autonomous Web Research Engine</p>
+            </div>
+            <ThemeToggle theme={theme} onToggle={toggleTheme} />
+          </header>
+        </div>
 
-        <ResearchForm onSubmit={handleStartResearch} isLoading={isSearching} />
+        <ResearchForm
+          onSubmit={handleStartResearch}
+          isLoading={isSearching}
+          onToggleBot={() => setIsBotOpen((prev) => !prev)}
+          isBotOpen={isBotOpen}
+        />
 
         <StatusIndicator status={currentStatus} />
 
@@ -209,6 +212,15 @@ const handleStartResearch = async (prompt, depth = 'quick') => {
           />
         )}
       </main>
+
+      {/* Render ScoutlyBot as a right sidebar component */}
+      {isBotOpen && (
+        <ScoutlyBot
+          isOpen={isBotOpen}
+          onClose={() => setIsBotOpen(false)}
+          reportContext={report}
+        />
+      )}
     </div>
   );
 }
