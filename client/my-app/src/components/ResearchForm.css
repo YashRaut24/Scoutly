@@ -1,7 +1,59 @@
-.research-form {
+/* src/components/ResearchForm.css */
+.research-form-container {
     display: flex;
+    flex-direction: column;
     gap: 12px;
     margin-bottom: 24px;
+}
+
+.depth-selector {
+    display: inline-flex;
+    background-color: var(--bg-card);
+    border: 1px solid var(--border-color);
+    padding: 4px;
+    border-radius: 8px;
+    gap: 4px;
+    align-self: flex-start;
+}
+
+.depth-option {
+    display: flex;
+    align-items: center;
+    gap: 6px;
+    padding: 6px 12px;
+    border-radius: 6px;
+    border: none;
+    background: transparent;
+    color: var(--text-muted);
+    font-size: 13px;
+    font-weight: 500;
+    cursor: pointer;
+    transition: all 0.2s ease;
+}
+
+.depth-option:hover:not(:disabled) {
+    color: var(--text-main);
+    background-color: var(--bg-hover);
+}
+
+.depth-option.active {
+    background-color: var(--accent-primary);
+    color: #ffffff;
+}
+
+.depth-option:disabled {
+    opacity: 0.6;
+    cursor: not-allowed;
+}
+
+.depth-icon {
+    width: 14px;
+    height: 14px;
+}
+
+.input-group {
+    display: flex;
+    gap: 12px;
 }
 
 .research-input {
@@ -26,6 +78,9 @@
 }
 
 .submit-btn {
+    display: flex;
+    align-items: center;
+    gap: 8px;
     background-color: var(--accent-primary);
     color: #ffffff;
     border: none;
@@ -44,4 +99,9 @@
 .submit-btn:disabled {
     opacity: 0.6;
     cursor: not-allowed;
+}
+
+.btn-search-icon {
+    width: 16px;
+    height: 16px;
 }
