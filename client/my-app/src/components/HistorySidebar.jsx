@@ -1,11 +1,15 @@
+// src/components/HistorySidebar.jsx
 import React from 'react';
-import { Pin, Trash2, Clock } from 'lucide-react';
+import { Zap, Compass, Pin, Trash2, Clock } from 'lucide-react';
 import './HistorySidebar.css';
 
-export default function HistorySidebar({ history, onSelectReport, onDeleteReport, onTogglePin }) {
-  // Sort pinned items to the top
-  const sortedHistory = [...history].sort((a, b) => Number(b.isPinned) - Number(a.isPinned));
-
+export default function HistorySidebar({
+  history = [],
+  activeReportId,
+  onSelectReport,
+  onTogglePin,
+  onDeleteReport
+}) {
   return (
     <aside className="history-sidebar">
       <div className="sidebar-header">
@@ -14,37 +18,60 @@ export default function HistorySidebar({ history, onSelectReport, onDeleteReport
       </div>
 
       <div className="history-list">
-        {sortedHistory.length === 0 ? (
-          <p className="empty-history">No research history yet.</p>
+        {history.length === 0 ? (
+          <div className="empty-history">No research history yet</div>
         ) : (
-          sortedHistory.map((item) => (
-            <div
-              key={item._id}
-              className={`history-card ${item.isPinned ? 'is-pinned' : ''}`}
-              onClick={() => onSelectReport(item)}
-            >
-              <div className="history-card-content">
-                <span className="history-query-text">{item.query}</span>
-              </div>
+          history.map((item) => {
+            const isDeep = item.depth === 'deep_dive';
 
-              <div className="history-actions" onClick={(e) => e.stopPropagation()}>
-                <button
-                  className={`action-btn pin-btn ${item.isPinned ? 'active-pin' : ''}`}
-                  title={item.isPinned ? "Unpin Research" : "Pin Research"}
-                  onClick={() => onTogglePin(item._id)}
-                >
-                  <Pin className="btn-icon" />
-                </button>
-                <button
-                  className="action-btn delete-btn"
-                  title="Delete Research"
-                  onClick={() => onDeleteReport(item._id)}
-                >
-                  <Trash2 className="btn-icon" />
-                </button>
+            return (
+              <div
+                key={item._id}
+                className={`history-item ${activeReportId === item._id ? 'active' : ''}`}
+                onClick={() => onSelectReport(item)}
+              >
+                <div className="history-content">
+                  {/* Mode Icon */}
+                  {isDeep ? (
+                    <Compass className="depth-icon deep" title="Deep Dive" />
+                  ) : (
+                    <Zap className="depth-icon quick" title="Quick Summary" />
+                  )}
+
+                  {/* Query Text */}
+                  <span className="history-query" title={item.query}>
+                    {item.query}
+                  </span>
+                </div>
+
+                <div className="history-actions">
+                  <button
+                    type="button"
+                    className={`action-btn ${item.isPinned ? 'pinned' : ''}`}
+                    onClick={(e) => {
+                      e.stopPropagation();
+                      onTogglePin(item._id);
+                    }}
+                    title={item.isPinned ? "Unpin" : "Pin"}
+                  >
+                    <Pin className="action-icon" />
+                  </button>
+
+                  <button
+                    type="button"
+                    className="action-btn delete-btn"
+                    onClick={(e) => {
+                      e.stopPropagation();
+                      onDeleteReport(item._id);
+                    }}
+                    title="Delete"
+                  >
+                    <Trash2 className="action-icon" />
+                  </button>
+                </div>
               </div>
-            </div>
-          ))
+            );
+          })
         )}
       </div>
     </aside>
