@@ -1,115 +1,151 @@
 import React, { useState, useRef, useEffect } from 'react';
-import ReactMarkdown from 'react-markdown';
-import { Bot, X, Send, Loader2, Sparkles } from 'lucide-react';
+import { Bot, X, Send, ExternalLink, Loader2 } from 'lucide-react';
 import './ScoutlyBot.css';
 
 export default function ScoutlyBot({ isOpen, onClose, reportContext }) {
-  const [messages, setMessages] = useState([]);
+  const [messages, setMessages] = useState([
+    {
+      sender: 'bot',
+      text: 'Hello! I am Scoutly Bot. Ask me anything about the generated research report or request live updates on topics mentioned in it.'
+    }
+  ]);
   const [input, setInput] = useState('');
-  const [loading, setLoading] = useState(false);
+  const [isLoading, setIsLoading] = useState(false);
   const messagesEndRef = useRef(null);
 
-  useEffect(() => {
+  const scrollToBottom = () => {
     messagesEndRef.current?.scrollIntoView({ behavior: 'smooth' });
-  }, [messages, loading]);
+  };
+
+  useEffect(() => {
+    if (isOpen) {
+      scrollToBottom();
+    }
+  }, [messages, isLoading, isOpen]);
 
   if (!isOpen) return null;
 
   const handleSend = async (e) => {
     e.preventDefault();
-    if (!input.trim() || loading) return;
-
     const userQuery = input.trim();
+    if (!userQuery || isLoading) return;
+
+    setMessages((prev) => [...prev, { sender: 'user', text: userQuery }]);
     setInput('');
-    setMessages((prev) => [...prev, { role: 'user', content: userQuery }]);
-    setLoading(true);
+    setIsLoading(true);
 
     try {
-      const response = await fetch('http://localhost:8000/api/assistant/explain', {
+      const res = await fetch('http://localhost:8000/api/assistant/explain', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({
-          reportContext: reportContext || '',
-          userQuery: userQuery,
-        }),
+          reportContext: reportContext || 'No report context available.',
+          userQuery: userQuery
+        })
       });
 
-      const data = await response.json();
-
-      if (response.ok) {
-        setMessages((prev) => [...prev, { role: 'bot', content: data.answer }]);
-      } else {
-        setMessages((prev) => [
-          ...prev,
-          { role: 'bot', content: `Error: ${data.detail || 'Failed to generate response.'}` },
-        ]);
+      if (!res.ok) {
+        throw new Error(`Server returned status ${res.status}`);
       }
-    } catch (err) {
+
+      const data = await res.json();
+
       setMessages((prev) => [
         ...prev,
-        { role: 'bot', content: 'Network error. Make sure Python server (port 8000) is running.' },
+        {
+          sender: 'bot',
+          text: data.answer,
+          citationMap: data.citationMap || {}
+        }
+      ]);
+    } catch (err) {
+      console.error('Error querying Scoutly Bot:', err);
+      setMessages((prev) => [
+        ...prev,
+        {
+          sender: 'bot',
+          text: '⚠️ An error occurred while processing your request. Please check that the backend server is running.',
+          isError: true
+        }
       ]);
     } finally {
-      setLoading(false);
+      setIsLoading(false);
     }
   };
 
   return (
-    <aside className="scoutly-bot-panel">
+    <aside className="scoutly-bot-sidebar">
+      {/* Header */}
       <div className="bot-header">
-        <div className="bot-header-title">
-          <Bot className="bot-header-icon" />
-          <h3>Scoutly Bot</h3>
+        <div className="bot-header-left">
+          <Bot className="bot-icon" size={18} />
+          <span className="bot-title">Scoutly Bot</span>
           <span className="bot-badge">Groq / Llama 3.3</span>
         </div>
-        <button type="button" className="close-btn" onClick={onClose} title="Close Assistant">
-          <X className="close-icon" />
+        <button type="button" className="bot-close-btn" onClick={onClose} title="Close">
+          <X size={18} />
         </button>
       </div>
 
-      <div className="bot-messages">
-        {messages.length === 0 ? (
-          <div className="bot-placeholder">
-            <Sparkles className="placeholder-icon" />
-            <p>Ask me anything about the active report context.</p>
-          </div>
-        ) : (
-          messages.map((msg, idx) => (
-            <div key={idx} className={`bot-message-bubble ${msg.role}`}>
-              <div className="message-content">
-                {msg.role === 'bot' ? (
-                  <ReactMarkdown>{msg.content}</ReactMarkdown>
-                ) : (
-                  msg.content
-                )}
-              </div>
+      {/* Message Chat Body */}
+      <div className="bot-messages-container">
+        {messages.map((msg, idx) => (
+          <div key={idx} className={`message-row ${msg.sender}`}>
+            <div className={`chat-bubble ${msg.sender} ${msg.isError ? 'error' : ''}`}>
+              <div className="bubble-content">{msg.text}</div>
+
+              {/* Citations section if present */}
+              {msg.citationMap && Object.keys(msg.citationMap).length > 0 && (
+                <div className="bot-citations-box">
+                  <div className="citations-header">Sources Consulted:</div>
+                  <div className="citations-list">
+                    {Object.values(msg.citationMap).map((cite, i) => (
+                      <a
+                        key={i}
+                        href={cite.url}
+                        target="_blank"
+                        rel="noopener noreferrer"
+                        className="citation-link"
+                      >
+                        <ExternalLink size={11} />
+                        <span>{cite.title || cite.url}</span>
+                      </a>
+                    ))}
+                  </div>
+                </div>
+              )}
             </div>
-          ))
-        )}
+          </div>
+        ))}
 
-        {/* Loading Indicator */}
-        {loading && (
-          <div className="bot-message-bubble bot loading">
-            <Loader2 className="spin-icon" />
-            <span>Thinking...</span>
+        {/* Thinking Pill Badge */}
+        {isLoading && (
+          <div className="message-row bot">
+            <div className="thinking-pill">
+              <Loader2 className="spinner" size={14} />
+              <span>Thinking...</span>
+            </div>
           </div>
         )}
-
-        {/* Scroll Anchor */}
         <div ref={messagesEndRef} />
       </div>
 
+      {/* Input Form Footer */}
       <form className="bot-input-form" onSubmit={handleSend}>
         <input
           type="text"
-          className="bot-input"
+          className="bot-input-field"
           placeholder="Ask a question about this report..."
           value={input}
           onChange={(e) => setInput(e.target.value)}
-          disabled={loading}
+          disabled={isLoading}
         />
-        <button type="submit" className="bot-send-btn" disabled={loading || !input.trim()}>
-          <Send className="send-icon" />
+        <button
+          type="submit"
+          className="bot-send-btn"
+          disabled={isLoading || !input.trim()}
+        >
+          <Send size={16} />
         </button>
       </form>
     </aside>
