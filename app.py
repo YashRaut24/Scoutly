@@ -25,18 +25,17 @@ class SSEEvent(BaseModel):
     message: Optional[str] = None
     delta: Optional[str] = None
 
-async def generate_status_events(query: str):
+async def generate_status_events(query: str, depth: str = "quick"):
     try:
-        # 1. Initializing Phase
+        depth_label = "Quick Summary" if depth == "quick" else "Deep Dive"
         init_event = SSEEvent(
             type="status", 
             phase="initializing", 
             message="Initializing research agent..."
         )
         yield f"data: {init_event.model_dump_json()}\n\n"
-        await asyncio.sleep(0.5)
+        await asyncio.sleep(0.4)
 
-        # 2. Searching & Gathering Phase
         search_event = SSEEvent(
             type="status", 
             phase="searching", 
@@ -44,10 +43,8 @@ async def generate_status_events(query: str):
         )
         yield f"data: {search_event.model_dump_json()}\n\n"
 
-        # Execute synchronous ReAct agent loop in a separate thread pool
-        report_text = await asyncio.to_thread(run_agent_loop, query)
+        report_text = await asyncio.to_thread(run_agent_loop, query, depth)
 
-        # 3. Optimizing Phase
         opt_event = SSEEvent(
             type="status", 
             phase="optimizing", 
@@ -79,9 +76,9 @@ async def generate_status_events(query: str):
         yield f"data: {error_event.model_dump_json()}\n\n"
 
 @app.get("/api/research/stream")
-async def stream_research(query: str = "FastAPI"):
+async def stream_research(query: str = "FastAPI", depth: str = "quick"):
     return StreamingResponse(
-        generate_status_events(query),
+        generate_status_events(query, depth),
         media_type="text/event-stream",
         headers={
             "Cache-Control": "no-cache",
@@ -89,7 +86,3 @@ async def stream_research(query: str = "FastAPI"):
             "X-Accel-Buffering": "no"
         }
     )
-
-if __name__ == "__main__":
-    import uvicorn
-    uvicorn.run("app:app", host="0.0.0.0", port=8000, reload=True)
