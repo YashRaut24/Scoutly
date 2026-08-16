@@ -1,11 +1,11 @@
 // src/components/ResearchForm.jsx
 import React, { useState } from 'react';
-import { Zap, Compass, Search } from 'lucide-react';
+import { Zap, Compass, Search, Bot } from 'lucide-react';
 import './ResearchForm.css';
 
-export default function ResearchForm({ onSubmit, isLoading }) {
+export default function ResearchForm({ onSubmit, isLoading, onToggleBot, isBotOpen }) {
   const [prompt, setPrompt] = useState('');
-  const [depth, setDepth] = useState('quick'); // 'quick' | 'deep_dive'
+  const [depth, setDepth] = useState('quick');
 
   const handleSubmit = (e) => {
     e.preventDefault();
@@ -15,26 +15,38 @@ export default function ResearchForm({ onSubmit, isLoading }) {
 
   return (
     <form className="research-form-container" onSubmit={handleSubmit}>
-      <div className="depth-selector">
-        <button
-          type="button"
-          className={`depth-option ${depth === 'quick' ? 'active' : ''}`}
-          onClick={() => setDepth('quick')}
-          disabled={isLoading}
-        >
-          <Zap className="depth-icon" />
-          <span>Quick Summary</span>
-        </button>
+      <div className="selector-row">
+        <div className="depth-selector">
+          <button
+            type="button"
+            className={`depth-option ${depth === 'quick' ? 'active' : ''}`}
+            onClick={() => setDepth('quick')}
+            disabled={isLoading}
+          >
+            <Zap className="depth-icon" />
+            <span>Quick Summary</span>
+          </button>
 
-        <button
-          type="button"
-          className={`depth-option ${depth === 'deep_dive' ? 'active' : ''}`}
-          onClick={() => setDepth('deep_dive')}
-          disabled={isLoading}
-        >
-          <Compass className="depth-icon" />
-          <span>Deep Dive</span>
-        </button>
+          <button
+            type="button"
+            className={`depth-option ${depth === 'deep_dive' ? 'active' : ''}`}
+            onClick={() => setDepth('deep_dive')}
+            disabled={isLoading}
+          >
+            <Compass className="depth-icon" />
+            <span>Deep Dive</span>
+          </button>
+
+          {/* Bot Logo button right after Deep Dive */}
+          <button
+            type="button"
+            className={`bot-icon-pill ${isBotOpen ? 'active' : ''}`}
+            onClick={onToggleBot}
+            title="Ask Scoutly Bot"
+          >
+            <Bot className="bot-btn-icon" />
+          </button>
+        </div>
       </div>
 
       <div className="input-group">
