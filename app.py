@@ -9,6 +9,8 @@ from pydantic import BaseModel
 from dotenv import load_dotenv
 from groq import Groq
 from ddgs import DDGS
+import io
+import openai
 
 # Load environment variables
 load_dotenv()
@@ -64,7 +66,48 @@ def fetch_live_search(query: str) -> tuple[str, dict]:
         print(f"Web search error: {e}")
         return "No live search results available.", {}
 
+class AudioSummaryRequest(BaseModel):
+    text: str
+    voice: str = "alloy"  # alloy, echo, fable, onyx, nova, shimmer
 
+@app.post("/api/audio/summary")
+async def generate_audio_summary(req: AudioSummaryRequest):
+    """Streams MP3 audio reading the full report text."""
+    openai_api_key = os.environ.get("OPENAI_API_KEY")
+    if not openai_api_key:
+        raise HTTPException(
+            status_code=500, 
+            detail="OPENAI_API_KEY is missing in backend environment."
+        )
+
+    try:
+        openai_client = openai.OpenAI(api_key=openai_api_key)
+
+        # Strip Markdown symbols so speech doesn't read out asterisks or brackets
+        clean_text = re.sub(r'[*#_`~]', '', req.text)
+        clean_text = re.sub(r'\[(.*?)\]\(.*?\)', r'\1', clean_text).strip()
+
+        # OpenAI tts-1 limit is 4096 characters per request
+        input_text = clean_text[:4000] if len(clean_text) > 4000 else clean_text
+
+        response = openai_client.audio.speech.create(
+            model="tts-1",
+            voice=req.voice,
+            input=input_text,
+            response_format="mp3"
+        )
+
+        audio_stream = io.BytesIO(response.content)
+        return StreamingResponse(
+            audio_stream, 
+            media_type="audio/mpeg",
+            headers={"Content-Disposition": "inline; filename=report_audio.mp3"}
+        )
+
+    except Exception as e:
+        print(f"TTS Generation Error: {e}")
+        raise HTTPException(status_code=500, detail=str(e))
+    
 @app.get("/api/research/stream")
 async def stream_research(query: str, depth: str = "quick"):
     async def event_generator():
