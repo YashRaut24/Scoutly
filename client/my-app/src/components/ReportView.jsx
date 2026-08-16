@@ -1,5 +1,6 @@
 import React from 'react';
 import { ExternalLink } from 'lucide-react';
+import AudioSummary from './AudioSummary';
 
 export default function ReportView({ query, content, citations = {}, isPinned, onTogglePin }) {
   const sourceList = Object.values(citations);
@@ -9,6 +10,8 @@ export default function ReportView({ query, content, citations = {}, isPinned, o
       <div className="report-header">
         <h2>Report: {query}</h2>
       </div>
+
+      <AudioSummary reportText={content} />
 
       {/* Sources / Citations Section */}
       {sourceList.length > 0 && (
