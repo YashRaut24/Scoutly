@@ -1,0 +1,117 @@
+.audio-summary-card {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    background-color: #161e2e;
+    border: 1px solid #2d3748;
+    border-radius: 12px;
+    padding: 10px 16px;
+    margin-bottom: 20px;
+}
+
+.audio-controls-left {
+    display: flex;
+    align-items: center;
+    gap: 12px;
+}
+
+.audio-play-btn {
+    background-color: #4f46e5;
+    color: #ffffff;
+    border: none;
+    width: 36px;
+    height: 36px;
+    border-radius: 50%;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    cursor: pointer;
+    transition: all 0.2s ease;
+}
+
+.audio-play-btn:hover:not(:disabled) {
+    background-color: #4338ca;
+    transform: scale(1.05);
+}
+
+.audio-play-btn:disabled {
+    background-color: #374151;
+    color: #6b7280;
+    cursor: not-allowed;
+}
+
+.audio-stop-btn {
+    background-color: #374151;
+    color: #e5e7eb;
+    border: none;
+    width: 28px;
+    height: 28px;
+    border-radius: 50%;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    cursor: pointer;
+}
+
+.audio-stop-btn:hover {
+    background-color: #4b5563;
+}
+
+.audio-info {
+    display: flex;
+    flex-direction: column;
+}
+
+.audio-title {
+    font-size: 13px;
+    font-weight: 600;
+    color: #f3f4f6;
+}
+
+.audio-status {
+    font-size: 11px;
+    color: #9ca3af;
+}
+
+.audio-mode-toggle {
+    display: flex;
+    background-color: #0b0f19;
+    padding: 3px;
+    border-radius: 8px;
+    border: 1px solid #1f2937;
+    gap: 4px;
+}
+
+.mode-btn {
+    display: flex;
+    align-items: center;
+    gap: 5px;
+    background: transparent;
+    border: none;
+    color: #9ca3af;
+    font-size: 11px;
+    padding: 5px 10px;
+    border-radius: 6px;
+    cursor: pointer;
+    transition: all 0.2s ease;
+}
+
+.mode-btn.active {
+    background-color: #1f2937;
+    color: #818cf8;
+    font-weight: 500;
+}
+
+.spinner {
+    animation: spin 1s linear infinite;
+}
+
+@keyframes spin {
+    from {
+        transform: rotate(0deg);
+    }
+
+    to {
+        transform: rotate(360deg);
+    }
+}
