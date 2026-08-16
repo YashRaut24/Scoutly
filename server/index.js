@@ -19,6 +19,10 @@ mongoose
 const historySchema = new mongoose.Schema({
   query: String,
   report: String,
+  depth: {
+    type: String,
+    default: 'quick'
+  },
   isPinned: {
     type: Boolean,
     default: false
@@ -44,24 +48,24 @@ app.get('/api/history', async (req, res) => {
 });
 
 // POST save search history
-app.patch('/api/history/:id/pin', async (req, res) => {
+app.post('/api/history', async (req, res) => {
   try {
-    const item = await History.findById(req.params.id);
-    if (!item) return res.status(404).json({ error: 'Not found' });
+    const { query, report, depth, isPinned } = req.body;
+    const newHistory = new History({
+      query,
+      report,
+      depth: depth || 'quick',
+      isPinned: isPinned || false
+    });
 
-    // Toggle pin state
-    const updated = await History.findByIdAndUpdate(
-      req.params.id,
-      { isPinned: !item.isPinned },
-      { new: true } // Return updated document
-    );
-
-    res.json(updated);
+    const savedItem = await newHistory.save();
+    res.status(201).json(savedItem);
   } catch (err) {
     res.status(500).json({ error: err.message });
   }
 });
 
+// PATCH toggle pin state
 app.patch('/api/history/:id/pin', async (req, res) => {
   try {
     const item = await History.findById(req.params.id);
