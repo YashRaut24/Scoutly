@@ -1,198 +1,178 @@
-/* src/components/ScoutlyBot.css */
-
-.scoutly-bot-panel {
-    width: 360px;
+/* Scoutly Bot Sidebar Layout */
+.scoutly-bot-sidebar {
+    width: 380px;
+    min-width: 320px;
     height: 100vh;
-    background-color: #0d1117;
-    border-left: 1px solid #1f2937;
+    background-color: #0b0f19;
+    border-left: 1px solid #1e293b;
     display: flex;
     flex-direction: column;
     flex-shrink: 0;
-    box-sizing: border-box;
+    /* Prevents the bot panel itself from shrinking */
+    box-shadow: -4px 0 20px rgba(0, 0, 0, 0.3);
+    font-family: inherit;
 }
 
+/* Header */
 .bot-header {
+    padding: 16px 20px;
+    border-bottom: 1px solid #1e293b;
     display: flex;
     align-items: center;
     justify-content: space-between;
-    padding: 16px;
-    border-bottom: 1px solid #1e293b;
-    background-color: #111827;
+    background-color: #0d1322;
 }
 
-.bot-header-title {
+.bot-header-left {
     display: flex;
     align-items: center;
-    gap: 8px;
+    gap: 10px;
 }
 
-.bot-header-title h3 {
-    font-size: 15px;
+.bot-icon {
+    color: #818cf8;
+}
+
+.bot-title {
     font-weight: 600;
+    font-size: 15px;
     color: #f8fafc;
-    margin: 0;
-}
-
-.bot-header-icon {
-    width: 20px;
-    height: 20px;
-    color: #6366f1;
 }
 
 .bot-badge {
     font-size: 11px;
-    background-color: rgba(99, 102, 241, 0.15);
-    color: #818cf8;
-    padding: 2px 6px;
-    border-radius: 4px;
+    background-color: #1e1b4b;
+    color: #a5b4fc;
+    padding: 2px 8px;
+    border-radius: 12px;
+    border: 1px solid #3730a3;
     font-weight: 500;
 }
 
-.close-btn {
+.bot-close-btn {
     background: transparent;
     border: none;
     color: #94a3b8;
     cursor: pointer;
+    display: flex;
+    align-items: center;
+    justify-content: center;
     padding: 4px;
-    border-radius: 4px;
-    display: flex;
-    align-items: center;
-    justify-content: center;
+    border-radius: 6px;
+    transition: all 0.2s ease;
 }
 
-.close-btn:hover {
+.bot-close-btn:hover {
     color: #f8fafc;
-    background-color: #1f2937;
+    background-color: #1e293b;
 }
 
-.close-icon {
-    width: 18px;
-    height: 18px;
-}
-
-.bot-messages {
+/* Messages Area */
+.bot-messages-container {
     flex: 1;
-    padding: 16px;
     overflow-y: auto;
+    padding: 20px;
     display: flex;
     flex-direction: column;
-    gap: 12px;
+    gap: 16px;
 }
 
-.bot-placeholder {
-    height: 100%;
+.message-row {
     display: flex;
-    flex-direction: column;
-    align-items: center;
-    justify-content: center;
-    color: #64748b;
-    text-align: center;
-    gap: 12px;
-    font-size: 13px;
-    padding: 0 20px;
+    width: 100%;
 }
 
-.placeholder-icon {
-    width: 32px;
-    height: 32px;
-    color: #475569;
+.message-row.user {
+    justify-content: flex-end;
 }
 
-.bot-message-bubble {
+.message-row.bot {
+    justify-content: flex-start;
+}
+
+/* User & Bot Bubbles */
+.chat-bubble {
     max-width: 85%;
-    padding: 10px 14px;
-    border-radius: 12px;
-    font-size: 13px;
+    font-size: 14px;
     line-height: 1.5;
+    white-space: pre-wrap;
     word-break: break-word;
 }
 
-.bot-message-bubble.user {
-    align-self: flex-end;
+.chat-bubble.user {
     background-color: #4f46e5;
     color: #ffffff;
-    border-bottom-right-radius: 4px;
+    padding: 10px 16px;
+    border-radius: 18px 18px 2px 18px;
+    font-weight: 500;
 }
 
-.bot-message-bubble.bot {
-    align-self: flex-start;
-    background-color: #1e293b;
+.chat-bubble.bot {
+    background-color: transparent;
     color: #e2e8f0;
-    border-bottom-left-radius: 4px;
-    border: 1px solid #334155;
+    padding: 0;
+    width: 100%;
+    max-width: 100%;
 }
 
-.bot-message-bubble.loading {
+.chat-bubble.error {
+    color: #f87171;
+    background-color: #2a1215;
+    padding: 10px 14px;
+    border-radius: 8px;
+    border: 1px solid #7f1d1d;
+}
+
+/* Citations */
+.bot-citations-box {
+    margin-top: 12px;
+    padding-top: 8px;
+    border-top: 1px solid #1e293b;
+}
+
+.citations-header {
+    font-size: 12px;
+    color: #94a3b8;
+    font-weight: 600;
+    margin-bottom: 6px;
+}
+
+.citations-list {
     display: flex;
+    flex-direction: column;
+    gap: 4px;
+}
+
+.citation-link {
+    color: #3b82f6;
+    font-size: 12px;
+    display: inline-flex;
+    align-items: center;
+    gap: 4px;
+    text-decoration: none;
+}
+
+.citation-link:hover {
+    text-decoration: underline;
+}
+
+/* Thinking Pill Badge */
+.thinking-pill {
+    display: inline-flex;
     align-items: center;
     gap: 8px;
+    background-color: #1e293b;
     color: #94a3b8;
+    padding: 8px 16px;
+    border-radius: 20px;
+    font-size: 13px;
+    font-weight: 500;
 }
 
-.spin-icon {
-    width: 14px;
-    height: 14px;
+.spinner {
     animation: spin 1s linear infinite;
 }
 
-.bot-input-form {
-    display: flex;
-    gap: 8px;
-    padding: 12px 16px;
-    border-top: 1px solid #1e293b;
-    background-color: #111827;
-}
-
-.bot-input {
-    flex: 1;
-    background-color: #0b0f19;
-    border: 1px solid #1f2937;
-    color: #f8fafc;
-    padding: 10px 14px;
-    border-radius: 6px;
-    font-size: 13px;
-    outline: none;
-}
-
-.bot-input:focus {
-    border-color: #6366f1;
-}
-
-.bot-send-btn {
-    background-color: #4f46e5;
-    color: #ffffff;
-    border: none;
-    padding: 10px;
-    border-radius: 6px;
-    cursor: pointer;
-    display: flex;
-    align-items: center;
-    justify-content: center;
-}
-
-.bot-send-btn:disabled {
-    opacity: 0.5;
-    cursor: not-allowed;
-}
-
-.send-icon {
-    width: 16px;
-    height: 16px;
-}
-
-@keyframes slideInRight {
-    from {
-        transform: translateX(100%);
-        opacity: 0;
-    }
-
-    to {
-        transform: translateX(0);
-        opacity: 1;
-    }
-}
-
-/* Spinner Rotation Animation */
 @keyframes spin {
     from {
         transform: rotate(0deg);
@@ -203,17 +183,56 @@
     }
 }
 
-.spin-icon {
-    animation: spin 1s linear infinite;
-    display: inline-block;
-    vertical-align: middle;
-}
-
-/* Loading Message Bubble Alignment */
-.bot-message-bubble.loading {
+/* Input Form Footer */
+.bot-input-form {
+    padding: 16px;
+    border-top: 1px solid #1e293b;
     display: flex;
     align-items: center;
     gap: 8px;
-    color: #94a3b8;
-    font-style: italic;
+    background-color: #0b0f19;
+}
+
+.bot-input-field {
+    flex: 1;
+    background-color: #161e2e;
+    border: 1px solid #2d3748;
+    border-radius: 8px;
+    padding: 10px 14px;
+    color: #f8fafc;
+    font-size: 13px;
+    outline: none;
+    transition: border-color 0.2s ease;
+}
+
+.bot-input-field:focus {
+    border-color: #4f46e5;
+}
+
+.bot-input-field::placeholder {
+    color: #64748b;
+}
+
+.bot-send-btn {
+    background-color: #4f46e5;
+    border: none;
+    color: #ffffff;
+    width: 38px;
+    height: 38px;
+    border-radius: 8px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    cursor: pointer;
+    transition: background-color 0.2s ease;
+}
+
+.bot-send-btn:hover:not(:disabled) {
+    background-color: #4338ca;
+}
+
+.bot-send-btn:disabled {
+    background-color: #2d3748;
+    color: #64748b;
+    cursor: not-allowed;
 }
