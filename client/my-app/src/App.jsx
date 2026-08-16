@@ -31,20 +31,20 @@ export default function App() {
   };
 
   useEffect(() => {
+    const fetchHistory = async () => {
+      try {
+        const res = await fetch('http://localhost:5000/api/history');
+        if (res.ok) {
+          const data = await res.json();
+          setHistory(data);
+        }
+      } catch (err) {
+        console.error('Failed to fetch history:', err);
+      }
+    };
+
     fetchHistory();
   }, []);
-
-  const fetchHistory = async () => {
-    try {
-      const res = await fetch('http://localhost:5000/api/history');
-      if (res.ok) {
-        const data = await res.json();
-        setHistory(data);
-      }
-    } catch (err) {
-      console.warn('Express server not connected:', err.message);
-    }
-  };
 
   const handleDeleteHistory = async (id) => {
     try {
@@ -79,82 +79,95 @@ export default function App() {
     }
   };
 
-  const handleStartResearch = async (prompt) => {
-    setQuery(prompt);
-    setIsSearching(true);
-    setActiveReportId(null);
-    setCurrentStatus({ phase: 'initializing', message: 'Initializing research workspace...' });
-    setReport('');
+// src/App.jsx (Updated handleStartResearch)
 
-    try {
-      const response = await fetch(`http://localhost:8000/api/research/stream?query=${encodeURIComponent(prompt)}`);
+const handleStartResearch = async (prompt, depth = 'quick') => {
+  setQuery(prompt);
+  setIsSearching(true);
+  setActiveReportId(null);
+  const depthLabel = depth === 'quick' ? 'Quick Summary' : 'Deep Dive';
+  setCurrentStatus({ phase: 'initializing', message: `Initializing research (${depthLabel})...` });
+  setReport('');
 
-      const reader = response.body.getReader();
-      const decoder = new TextDecoder();
-      let buffer = '';
-      let accumulatedReport = '';
+  try {
+    const response = await fetch(
+      `http://localhost:8000/api/research/stream?query=${encodeURIComponent(prompt)}&depth=${encodeURIComponent(depth)}`
+    );
 
-      while (true) {
-        const { value, done } = await reader.read();
-        if (done) break;
+    const reader = response.body.getReader();
+    const decoder = new TextDecoder();
+    let buffer = '';
+    let accumulatedReport = '';
 
-        buffer += decoder.decode(value, { stream: true });
-        const lines = buffer.split('\n\n');
-        buffer = lines.pop() || '';
+    while (true) {
+      const { value, done } = await reader.read();
+      if (done) break;
 
-        for (const line of lines) {
-          const trimmedLine = line.trim();
-          if (trimmedLine.startsWith('data: ')) {
-            const rawJson = trimmedLine.replace('data: ', '');
-            try {
-              const data = JSON.parse(rawJson);
+      buffer += decoder.decode(value, { stream: true });
+      const lines = buffer.split('\n\n');
+      buffer = lines.pop() || '';
 
-              if (data.type === 'status') {
-                setCurrentStatus({ phase: data.phase, message: data.message });
-              } else if (data.type === 'content' && data.delta) {
-                accumulatedReport += data.delta;
-                setReport(accumulatedReport);
-              } else if (data.type === 'final' || data.phase === 'complete') {
-                if (data.content) accumulatedReport = data.content;
-                setCurrentStatus({ phase: 'complete', message: 'Research complete.' });
-              }
-            } catch (err) {
-              console.error('Failed to parse SSE line:', rawJson, err);
+      for (const line of lines) {
+        const trimmedLine = line.trim();
+        if (trimmedLine.startsWith('data: ')) {
+          const rawJson = trimmedLine.replace('data: ', '');
+          try {
+            const data = JSON.parse(rawJson);
+
+            if (data.type === 'status') {
+              setCurrentStatus({ phase: data.phase, message: data.message });
+            } else if (data.type === 'content' && data.delta) {
+              accumulatedReport += data.delta;
+              setReport(accumulatedReport);
+            } else if (data.type === 'final' || data.phase === 'complete') {
+              if (data.content) accumulatedReport = data.content;
+              setCurrentStatus({ phase: 'complete', message: 'Research complete.' });
             }
+          } catch (err) {
+            console.error('Failed to parse SSE line:', rawJson, err);
           }
         }
       }
-
-      if (accumulatedReport) {
-        const saved = await saveToHistory(prompt, accumulatedReport);
-        if (saved && saved._id) {
-          setActiveReportId(saved._id);
-        }
-      }
-    } catch (error) {
-      console.error('Research error:', error);
-      setCurrentStatus(null);
-    } finally {
-      setIsSearching(false);
     }
-  };
 
-  const saveToHistory = async (queryStr, reportStr) => {
+    if (accumulatedReport) {
+      const saved = await saveToHistory(prompt, accumulatedReport, depth);
+      if (saved && saved._id) {
+        setActiveReportId(saved._id);
+      }
+    }
+  } catch (error) {
+    console.error('Research error:', error);
+    setCurrentStatus(null);
+  } finally {
+    setIsSearching(false);
+  }
+};
+  const saveToHistory = async (queryText, reportText, depth = 'quick') => {
     try {
       const res = await fetch('http://localhost:5000/api/history', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ query: queryStr, report: reportStr })
+        body: JSON.stringify({
+          query: queryText,
+          report: reportText,
+          depth: depth,
+          isPinned: false
+        })
       });
-      if (res.ok) {
-        const savedItem = await res.json();
-        fetchHistory();
-        return savedItem;
-      }
+
+      if (!res.ok) throw new Error('Failed to save history item');
+
+      const savedItem = await res.json();
+
+      // UPDATE LOCAL STATE IMMEDIATELY FOR SIDEBAR RE-RENDER
+      setHistory((prev) => [savedItem, ...prev]);
+
+      return savedItem;
     } catch (err) {
-      console.error('Failed to save history:', err);
+      console.error('Error saving to history:', err);
+      return null;
     }
-    return null;
   };
 
   const activeItem = history.find((item) => item._id === activeReportId);
