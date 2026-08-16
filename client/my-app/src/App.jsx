@@ -1,4 +1,3 @@
-// src/App.jsx
 import React, { useState, useEffect } from 'react';
 import './App.css';
 import HistorySidebar from './components/HistorySidebar';
@@ -18,6 +17,7 @@ export default function App() {
   const [isSearching, setIsSearching] = useState(false);
   const [currentStatus, setCurrentStatus] = useState(null);
   const [report, setReport] = useState('');
+  const [citations, setCitations] = useState({});
   const [activeReportId, setActiveReportId] = useState(null);
   const [history, setHistory] = useState([]);
 
@@ -56,6 +56,7 @@ export default function App() {
         if (activeReportId === id) {
           setActiveReportId(null);
           setReport('');
+          setCitations({});
         }
       }
     } catch (err) {
@@ -83,6 +84,7 @@ export default function App() {
     setQuery(prompt);
     setIsSearching(true);
     setActiveReportId(null);
+    setCitations({});
     const depthLabel = depth === 'quick' ? 'Quick Summary' : 'Deep Dive';
     setCurrentStatus({ phase: 'initializing', message: `Initializing research (${depthLabel})...` });
     setReport('');
@@ -92,10 +94,15 @@ export default function App() {
         `http://localhost:8000/api/research/stream?query=${encodeURIComponent(prompt)}&depth=${encodeURIComponent(depth)}`
       );
 
+      if (!response.ok) {
+        throw new Error(`HTTP error! status: ${response.status}`);
+      }
+
       const reader = response.body.getReader();
       const decoder = new TextDecoder();
       let buffer = '';
       let accumulatedReport = '';
+      let receivedCitations = {};
 
       while (true) {
         const { value, done } = await reader.read();
@@ -113,9 +120,15 @@ export default function App() {
               const data = JSON.parse(rawJson);
 
               if (data.type === 'status') {
-                setCurrentStatus({ phase: data.phase, message: data.message });
-              } else if (data.type === 'content' && data.delta) {
-                accumulatedReport += data.delta;
+                setCurrentStatus({ 
+                  phase: data.phase || 'processing', 
+                  message: data.message || data.content || 'Processing...' 
+                });
+              } else if (data.type === 'citations') {
+                receivedCitations = data.citations || {};
+                setCitations(receivedCitations);
+              } else if (data.type === 'content' && (data.delta || data.content)) {
+                accumulatedReport += (data.delta || data.content);
                 setReport(accumulatedReport);
               } else if (data.type === 'final' || data.phase === 'complete') {
                 if (data.content) accumulatedReport = data.content;
@@ -129,20 +142,20 @@ export default function App() {
       }
 
       if (accumulatedReport) {
-        const saved = await saveToHistory(prompt, accumulatedReport, depth);
+        const saved = await saveToHistory(prompt, accumulatedReport, depth, receivedCitations);
         if (saved && saved._id) {
           setActiveReportId(saved._id);
         }
       }
     } catch (error) {
       console.error('Research error:', error);
-      setCurrentStatus(null);
+      setCurrentStatus({ phase: 'error', message: 'An error occurred during research stream.' });
     } finally {
       setIsSearching(false);
     }
   };
 
-  const saveToHistory = async (queryText, reportText, depth = 'quick') => {
+  const saveToHistory = async (queryText, reportText, depth = 'quick', citationMap = {}) => {
     try {
       const res = await fetch('http://localhost:5000/api/history', {
         method: 'POST',
@@ -151,6 +164,7 @@ export default function App() {
           query: queryText,
           report: reportText,
           depth: depth,
+          citations: citationMap,
           isPinned: false
         })
       });
@@ -176,6 +190,7 @@ export default function App() {
         onSelectReport={(item) => {
           setQuery(item.query);
           setReport(item.report);
+          setCitations(item.citations || {});
           setActiveReportId(item._id);
           setCurrentStatus(null);
         }}
@@ -207,6 +222,7 @@ export default function App() {
           <ReportView
             query={query}
             content={report}
+            citations={citations}
             isPinned={isCurrentPinned}
             onTogglePin={activeReportId ? () => handleTogglePin(activeReportId) : null}
           />
