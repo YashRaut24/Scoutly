@@ -1,5 +1,6 @@
 const express = require('express');
 const router = express.Router();
+const crypto = require('crypto');
 const ResearchHistory = require('../models/ResearchHistory');
 const auth = require('../middleware/auth');
 
@@ -73,6 +74,36 @@ router.patch('/:id/pin', async (req, res) => {
     res.json(report);
   } catch (err) {
     res.status(500).json({ message: 'Failed to update pin state.' });
+  }
+});
+
+// PATCH toggle public share link owned by user
+router.patch('/:id/share', async (req, res) => {
+  try {
+    const report = await ResearchHistory.findOne({
+      _id: req.params.id,
+      userId: req.user.id
+    });
+
+    if (!report) {
+      return res.status(404).json({ message: 'Report not found or unauthorized.' });
+    }
+
+    report.isPublic = !report.isPublic;
+
+    // Generate token on first publish if absent
+    if (report.isPublic && !report.shareToken) {
+      report.shareToken = crypto.randomBytes(8).toString('hex');
+    }
+
+    await report.save();
+    res.json({
+      isPublic: report.isPublic,
+      shareToken: report.shareToken,
+      shareUrl: report.isPublic ? `${req.protocol}://${req.get('host')}/share/${report.shareToken}` : null
+    });
+  } catch (err) {
+    res.status(500).json({ message: 'Failed to update share status.' });
   }
 });
 

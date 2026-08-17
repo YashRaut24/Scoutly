@@ -10,6 +10,7 @@ app.use(cors({ origin: ['http://localhost:5173', 'http://localhost:3000'] }));
 app.use(express.json());
 app.use('/api/auth', authRoutes);
 app.use('/api/history', historyRoutes);
+app.use('/api/public', require('./routes/public'));
 
 // 1. Connect to Local MongoDB
 const MONGO_URI = 'mongodb://127.0.0.1:27017/scoutly';

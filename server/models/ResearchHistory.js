@@ -12,6 +12,8 @@ const ResearchHistorySchema = new mongoose.Schema({
   depth: { type: String, default: 'quick' },
   citations: { type: Object, default: {} },
   isPinned: { type: Boolean, default: false },
+  isPublic: { type: Boolean, default: false },
+  shareToken: { type: String, unique: true, sparse: true },
   createdAt: { type: Date, default: Date.now }
 });
 

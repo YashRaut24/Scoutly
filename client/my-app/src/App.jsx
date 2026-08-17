@@ -19,13 +19,6 @@ export default function App() {
     return localStorage.getItem('theme') || 'dark';
   });
 
-  useEffect(() => {
-    setIsAuthModalOpen(!token);
-    if (!token) {
-      setAuthModalMode('signup');
-    }
-  }, [token]);
-
   const [isBotOpen, setIsBotOpen] = useState(false);
   const [query, setQuery] = useState('');
   const [isSearching, setIsSearching] = useState(false);
@@ -34,19 +27,57 @@ export default function App() {
   const [citations, setCitations] = useState({});
   const [activeReportId, setActiveReportId] = useState(null);
   const [history, setHistory] = useState([]);
+  const [isPublicView, setIsPublicView] = useState(false);
 
   useEffect(() => {
     document.documentElement.setAttribute('data-theme', theme);
     localStorage.setItem('theme', theme);
   }, [theme]);
 
+  // Handle /share/:shareToken route detection on load
+  useEffect(() => {
+    const path = window.location.pathname;
+    if (path.startsWith('/share/')) {
+      const shareToken = path.split('/share/')[1];
+      if (shareToken) {
+        setIsPublicView(true);
+        setIsAuthModalOpen(false);
+        fetchPublicReport(shareToken);
+      }
+    }
+  }, []);
+
+  const fetchPublicReport = async (shareToken) => {
+    try {
+      const res = await fetch(`http://localhost:5000/api/public/report/${shareToken}`);
+      if (res.ok) {
+        const data = await res.json();
+        setQuery(data.query);
+        setReport(data.report);
+        setCitations(data.citations || {});
+      } else {
+        alert('This public research link has expired or is invalid.');
+      }
+    } catch (err) {
+      console.error('Error fetching public report:', err);
+    }
+  };
+
+  useEffect(() => {
+    if (!token && !isPublicView) {
+      setIsAuthModalOpen(true);
+      setAuthModalMode('signup');
+    } else {
+      setIsAuthModalOpen(false);
+    }
+  }, [token, isPublicView]);
+
   const toggleTheme = () => {
     setTheme((prev) => (prev === 'dark' ? 'light' : 'dark'));
   };
 
-  // Fetch history using authenticated fetch whenever token status changes
   useEffect(() => {
-    if (!token) {
+    if (!token || isPublicView) {
       setHistory([]);
       return;
     }
@@ -64,7 +95,7 @@ export default function App() {
     };
 
     fetchHistory();
-  }, [token]);
+  }, [token, isPublicView]);
 
   const handleDeleteHistory = async (id) => {
     try {
@@ -127,7 +158,6 @@ export default function App() {
   };
 
   const handleStartResearch = async (prompt, depth = 'quick') => {
-    // Prompt login modal if unauthenticated user attempts research
     if (!user) {
       setIsAuthModalOpen(true);
       return;
@@ -212,31 +242,45 @@ export default function App() {
 
   return (
     <div className="app-container">
-      <HistorySidebar
-        history={history}
-        onSelectReport={(item) => {
-          setQuery(item.query);
-          setReport(item.report);
-          setCitations(item.citations || {});
-          setActiveReportId(item._id);
-          setCurrentStatus(null);
-        }}
-        onDeleteReport={handleDeleteHistory}
-        onTogglePin={handleTogglePin}
-      />
+      {!isPublicView && (
+        <HistorySidebar
+          history={history}
+          onSelectReport={(item) => {
+            setQuery(item.query);
+            setReport(item.report);
+            setCitations(item.citations || {});
+            setActiveReportId(item._id);
+            setCurrentStatus(null);
+          }}
+          onDeleteReport={handleDeleteHistory}
+          onTogglePin={handleTogglePin}
+        />
+      )}
 
       <main className="main-workspace">
         <div className="top-bar">
           <header className="workspace-header">
             <div>
               <h1 className="workspace-title">Scoutly Agent</h1>
-              <p className="workspace-subtitle">Autonomous Web Research Engine</p>
+              <p className="workspace-subtitle">
+                {isPublicView ? 'Public Shared Report View' : 'Autonomous Web Research Engine'}
+              </p>
             </div>
 
             <div style={{ display: 'flex', alignItems: 'center', gap: '12px' }}>
               <ThemeToggle theme={theme} onToggle={toggleTheme} />
 
-              {user ? (
+              {isPublicView ? (
+                <button
+                  onClick={() => {
+                    setAuthModalMode('login');
+                    setIsAuthModalOpen(true);
+                  }}
+                  className="public-cta-btn"
+                >
+                  Want to add this in your chat?
+                </button>
+              ) : user ? (
                 <div className="user-profile-badge">
                   <UserIcon size={14} />
                   <span>{user.name || user.email}</span>
@@ -259,12 +303,14 @@ export default function App() {
           </header>
         </div>
 
-        <ResearchForm
-          onSubmit={handleStartResearch}
-          isLoading={isSearching}
-          onToggleBot={() => setIsBotOpen((prev) => !prev)}
-          isBotOpen={isBotOpen}
-        />
+        {!isPublicView && (
+          <ResearchForm
+            onSubmit={handleStartResearch}
+            isLoading={isSearching}
+            onToggleBot={() => setIsBotOpen((prev) => !prev)}
+            isBotOpen={isBotOpen}
+          />
+        )}
 
         <StatusIndicator status={currentStatus} />
 
@@ -275,11 +321,12 @@ export default function App() {
             citations={citations}
             isPinned={isCurrentPinned}
             onTogglePin={activeReportId ? () => handleTogglePin(activeReportId) : null}
+            activeReportId={activeReportId}
+            authFetch={authFetch}
           />
         )}
       </main>
 
-      {/* Render ScoutlyBot as a right sidebar component */}
       {isBotOpen && (
         <ScoutlyBot
           isOpen={isBotOpen}
@@ -288,7 +335,6 @@ export default function App() {
         />
       )}
 
-      {/* Render AuthModal for login/signup */}
       <AuthModal
         isOpen={isAuthModalOpen}
         onClose={() => setIsAuthModalOpen(false)}
