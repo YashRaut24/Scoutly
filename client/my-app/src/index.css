@@ -1,9 +1,10 @@
 /* src/index.css */
 
 :root,
-[data-theme="dark"] {
-  --bg-primary: #0a0d12;
-  --bg-secondary: #0b1120;
+[data-theme='dark'] {
+  --bg-primary: #0b0f19;
+  --bg-secondary: #161e2e;
+  --bg-workspace: #0f172a;
   --bg-card: #0f172a;
   --bg-hover: #1e293b;
   --border-color: #1e293b;
@@ -13,24 +14,51 @@
   --text-subtle: #64748b;
   --accent-primary: #3b82f6;
   --accent-hover: #2563eb;
+  --accent-strong: #4f46e5;
+  --accent-soft: rgba(79, 70, 229, 0.15);
   --pinned-bg: #1e1b4b;
   --pinned-border: #3b82f6;
+  --input-bg: #0b0f19;
+  --input-border: #2d3748;
+  --surface-alt: #111827;
+  --surface-strong: #1e1b4b;
+  --warning: #f59e0b;
+  --purple: #8b5cf6;
+  --success: #10b981;
+  --danger-bg: #2a1215;
+  --danger-border: #7f1d1d;
+  --danger-text: #f87171;
+  --modal-overlay: rgba(0, 0, 0, 0.65);
 }
 
-[data-theme="light"] {
+[data-theme='light'] {
   --bg-primary: #f8fafc;
-  --bg-secondary: #f1f5f9;
+  --bg-secondary: #ffffff;
+  --bg-workspace: #f1f5f9;
   --bg-card: #ffffff;
   --bg-hover: #e2e8f0;
   --border-color: #e2e8f0;
   --border-hover: #cbd5e1;
   --text-main: #0f172a;
   --text-muted: #475569;
-  --text-subtle: #94a3b8;
+  --text-subtle: #64748b;
   --accent-primary: #2563eb;
   --accent-hover: #1d4ed8;
+  --accent-strong: #4f46e5;
+  --accent-soft: rgba(79, 70, 229, 0.12);
   --pinned-bg: #eff6ff;
   --pinned-border: #3b82f6;
+  --input-bg: #f8fafc;
+  --input-border: #dbe3ee;
+  --surface-alt: #f8fafc;
+  --surface-strong: #eef2ff;
+  --warning: #d97706;
+  --purple: #7c3aed;
+  --success: #059669;
+  --danger-bg: #fef2f2;
+  --danger-border: #fca5a5;
+  --danger-text: #dc2626;
+  --modal-overlay: rgba(15, 23, 42, 0.45);
 }
 
 * {
@@ -39,9 +67,19 @@
   padding: 0;
 }
 
+html {
+  background-color: var(--bg-primary);
+}
+
 body {
   background-color: var(--bg-primary);
   color: var(--text-main);
   font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Oxygen, Ubuntu, Cantarell, sans-serif;
   transition: background-color 0.25s ease, color 0.25s ease;
+}
+
+button,
+input,
+textarea {
+  font-family: inherit;
 }

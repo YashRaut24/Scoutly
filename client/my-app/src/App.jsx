@@ -1,16 +1,30 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useContext } from 'react';
 import './App.css';
+import { AuthContext } from './context/AuthContext';
 import HistorySidebar from './components/HistorySidebar';
 import ResearchForm from './components/ResearchForm';
 import ReportView from './components/ReportView';
 import StatusIndicator from './components/StatusIndicator';
 import ThemeToggle from './components/ThemeToggle';
 import ScoutlyBot from './components/ScoutlyBot';
+import AuthModal from './components/AuthModal';
+import { LogIn, LogOut, User as UserIcon } from 'lucide-react';
 
 export default function App() {
+  const { user, token, logout, authFetch } = useContext(AuthContext);
+  const [authModalMode, setAuthModalMode] = useState('signup');
+  const [isAuthModalOpen, setIsAuthModalOpen] = useState(() => !token);
+
   const [theme, setTheme] = useState(() => {
     return localStorage.getItem('theme') || 'dark';
   });
+
+  useEffect(() => {
+    setIsAuthModalOpen(!token);
+    if (!token) {
+      setAuthModalMode('signup');
+    }
+  }, [token]);
 
   const [isBotOpen, setIsBotOpen] = useState(false);
   const [query, setQuery] = useState('');
@@ -30,10 +44,16 @@ export default function App() {
     setTheme((prev) => (prev === 'dark' ? 'light' : 'dark'));
   };
 
+  // Fetch history using authenticated fetch whenever token status changes
   useEffect(() => {
+    if (!token) {
+      setHistory([]);
+      return;
+    }
+
     const fetchHistory = async () => {
       try {
-        const res = await fetch('http://localhost:5000/api/history');
+        const res = await authFetch('http://localhost:5000/api/history');
         if (res.ok) {
           const data = await res.json();
           setHistory(data);
@@ -44,11 +64,11 @@ export default function App() {
     };
 
     fetchHistory();
-  }, []);
+  }, [token]);
 
   const handleDeleteHistory = async (id) => {
     try {
-      const res = await fetch(`http://localhost:5000/api/history/${id}`, {
+      const res = await authFetch(`http://localhost:5000/api/history/${id}`, {
         method: 'DELETE'
       });
       if (res.ok) {
@@ -66,7 +86,7 @@ export default function App() {
 
   const handleTogglePin = async (id) => {
     try {
-      const res = await fetch(`http://localhost:5000/api/history/${id}/pin`, {
+      const res = await authFetch(`http://localhost:5000/api/history/${id}/pin`, {
         method: 'PATCH'
       });
       if (res.ok) {
@@ -80,7 +100,39 @@ export default function App() {
     }
   };
 
+  const saveToHistory = async (queryText, reportText, depth = 'quick', citationMap = {}) => {
+    if (!token) return null;
+
+    try {
+      const res = await authFetch('http://localhost:5000/api/history', {
+        method: 'POST',
+        body: JSON.stringify({
+          query: queryText,
+          report: reportText,
+          depth: depth,
+          citations: citationMap,
+          isPinned: false
+        })
+      });
+
+      if (!res.ok) throw new Error('Failed to save history item');
+
+      const savedItem = await res.json();
+      setHistory((prev) => [savedItem, ...prev]);
+      return savedItem;
+    } catch (err) {
+      console.error('Error saving to history:', err);
+      return null;
+    }
+  };
+
   const handleStartResearch = async (prompt, depth = 'quick') => {
+    // Prompt login modal if unauthenticated user attempts research
+    if (!user) {
+      setIsAuthModalOpen(true);
+      return;
+    }
+
     setQuery(prompt);
     setIsSearching(true);
     setActiveReportId(null);
@@ -155,31 +207,6 @@ export default function App() {
     }
   };
 
-  const saveToHistory = async (queryText, reportText, depth = 'quick', citationMap = {}) => {
-    try {
-      const res = await fetch('http://localhost:5000/api/history', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({
-          query: queryText,
-          report: reportText,
-          depth: depth,
-          citations: citationMap,
-          isPinned: false
-        })
-      });
-
-      if (!res.ok) throw new Error('Failed to save history item');
-
-      const savedItem = await res.json();
-      setHistory((prev) => [savedItem, ...prev]);
-      return savedItem;
-    } catch (err) {
-      console.error('Error saving to history:', err);
-      return null;
-    }
-  };
-
   const activeItem = history.find((item) => item._id === activeReportId);
   const isCurrentPinned = activeItem ? activeItem.isPinned : false;
 
@@ -205,7 +232,30 @@ export default function App() {
               <h1 className="workspace-title">Scoutly Agent</h1>
               <p className="workspace-subtitle">Autonomous Web Research Engine</p>
             </div>
-            <ThemeToggle theme={theme} onToggle={toggleTheme} />
+
+            <div style={{ display: 'flex', alignItems: 'center', gap: '12px' }}>
+              <ThemeToggle theme={theme} onToggle={toggleTheme} />
+
+              {user ? (
+                <div className="user-profile-badge">
+                  <UserIcon size={14} />
+                  <span>{user.name || user.email}</span>
+                  <button onClick={logout} className="logout-btn" title="Log Out">
+                    <LogOut size={14} />
+                  </button>
+                </div>
+              ) : (
+                <button
+                  onClick={() => {
+                    setAuthModalMode('login');
+                    setIsAuthModalOpen(true);
+                  }}
+                  className="login-trigger-btn"
+                >
+                  <LogIn size={14} /> Log In
+                </button>
+              )}
+            </div>
           </header>
         </div>
 
@@ -237,6 +287,13 @@ export default function App() {
           reportContext={report}
         />
       )}
+
+      {/* Render AuthModal for login/signup */}
+      <AuthModal
+        isOpen={isAuthModalOpen}
+        onClose={() => setIsAuthModalOpen(false)}
+        initialMode={authModalMode}
+      />
     </div>
   );
 }

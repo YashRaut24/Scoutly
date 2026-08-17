@@ -3,8 +3,8 @@
 .history-sidebar {
     width: 260px;
     height: 100vh;
-    background-color: #0b0f19;
-    border-right: 1px solid #1e293b;
+    background-color: var(--bg-primary);
+    border-right: 1px solid var(--border-color);
     display: flex;
     flex-direction: column;
     padding: 16px;
@@ -16,7 +16,7 @@
     align-items: center;
     gap: 10px;
     margin-bottom: 20px;
-    color: #f8fafc;
+    color: var(--text-main);
 }
 
 .sidebar-header h2 {
@@ -28,7 +28,7 @@
 .header-icon {
     width: 20px;
     height: 20px;
-    color: #94a3b8;
+    color: var(--text-muted);
 }
 
 .history-list {
@@ -39,7 +39,7 @@
 }
 
 .empty-history {
-    color: #64748b;
+    color: var(--text-subtle);
     font-size: 13px;
     padding: 12px 0;
     text-align: center;
@@ -52,22 +52,22 @@
     justify-content: space-between;
     padding: 12px 14px;
     border-radius: 8px;
-    background-color: #111827;
-    border: 1px solid #1f2937;
+    background-color: var(--surface-alt);
+    border: 1px solid var(--border-color);
     cursor: pointer;
     transition: all 0.2s ease;
     gap: 10px;
 }
 
 .history-item:hover {
-    background-color: #1e1b4b;
-    border-color: #3730a3;
+    background-color: var(--pinned-bg);
+    border-color: var(--pinned-border);
 }
 
 /* Active Highlight Card State */
 .history-item.active {
-    background-color: #1e1b4b;
-    border: 1px solid #6366f1;
+    background-color: var(--pinned-bg);
+    border: 1px solid var(--accent-strong);
     box-shadow: 0 0 12px rgba(99, 102, 241, 0.25);
 }
 
@@ -82,7 +82,7 @@
 
 .history-query {
     font-size: 14px;
-    color: #e2e8f0;
+    color: var(--text-main);
     white-space: nowrap;
     overflow: hidden;
     text-overflow: ellipsis;
@@ -96,13 +96,11 @@
 }
 
 .depth-icon.quick {
-    color: #f59e0b;
-    /* Amber */
+    color: var(--warning);
 }
 
 .depth-icon.deep {
-    color: #3b82f6;
-    /* Blue */
+    color: var(--accent-primary);
 }
 
 /* Action Buttons */
@@ -118,7 +116,7 @@
     border: none;
     padding: 4px;
     cursor: pointer;
-    color: #6366f1;
+    color: var(--accent-strong);
     border-radius: 4px;
     display: flex;
     align-items: center;
@@ -131,11 +129,11 @@
 }
 
 .action-btn.pinned {
-    color: #818cf8;
+    color: var(--purple);
 }
 
 .action-btn.delete-btn {
-    color: #6366f1;
+    color: var(--accent-strong);
 }
 
 .action-icon {

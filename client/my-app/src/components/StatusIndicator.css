@@ -5,8 +5,8 @@
     gap: 12px;
     padding: 8px 16px;
     border-radius: 9999px;
-    background-color: #0f172a;
-    border: 1px solid #1e293b;
+    background-color: var(--bg-card);
+    border: 1px solid var(--border-color);
     margin-bottom: 20px;
     box-shadow: 0 4px 12px rgba(0, 0, 0, 0.2);
     transition: all 0.3s ease;
@@ -33,23 +33,23 @@
     font-weight: 700;
     text-transform: uppercase;
     letter-spacing: 0.05em;
-    color: #94a3b8;
+    color: var(--text-muted);
 }
 
 .status-message-text {
     font-size: 13px;
     font-weight: 500;
-    color: #f8fafc;
+    color: var(--text-main);
 }
 
 /* Phase Variant Colors & Animations */
 .phase-initializing .status-icon {
-    color: #3b82f6;
+    color: var(--accent-primary);
     animation: status-spin 1.5s linear infinite;
 }
 
 .phase-searching .status-icon {
-    color: #f59e0b;
+    color: var(--warning);
     animation: status-pulse-glow 1.2s ease-in-out infinite alternate;
 }
 
@@ -59,12 +59,12 @@
 }
 
 .phase-optimizing .status-icon {
-    color: #6366f1;
+    color: var(--accent-strong);
     animation: status-spin 2s linear infinite;
 }
 
 .phase-complete .status-icon {
-    color: #10b981;
+    color: var(--success);
 }
 
 /* Keyframe Animations */
