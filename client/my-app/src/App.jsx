@@ -8,13 +8,14 @@ import StatusIndicator from './components/StatusIndicator';
 import ThemeToggle from './components/ThemeToggle';
 import ScoutlyBot from './components/ScoutlyBot';
 import AuthModal from './components/AuthModal';
-import { LogIn, LogOut, User as UserIcon } from 'lucide-react';
+import SchedulesModal from './components/SchedulesModal';
+import { LogIn, LogOut, User as UserIcon, Calendar } from 'lucide-react';
 
 export default function App() {
   const { user, token, logout, authFetch } = useContext(AuthContext);
   const [authModalMode, setAuthModalMode] = useState('signup');
   const [isAuthModalOpen, setIsAuthModalOpen] = useState(() => !token);
-
+  const [isScheduleModalOpen, setIsScheduleModalOpen] = useState(false);
   const [theme, setTheme] = useState(() => {
     return localStorage.getItem('theme') || 'dark';
   });
@@ -268,6 +269,16 @@ export default function App() {
             </div>
 
             <div style={{ display: 'flex', alignItems: 'center', gap: '12px' }}>
+              {user && !isPublicView && (
+                <button
+                  onClick={() => setIsScheduleModalOpen((prev) => !prev)}
+                  className={`schedule-trigger-btn ${isScheduleModalOpen ? 'active' : ''}`}
+                  title="Automated Digest Schedules"
+                >
+                  <Calendar size={14} /> Schedules
+                </button>
+              )}
+
               <ThemeToggle theme={theme} onToggle={toggleTheme} />
 
               {isPublicView ? (
@@ -339,6 +350,11 @@ export default function App() {
         isOpen={isAuthModalOpen}
         onClose={() => setIsAuthModalOpen(false)}
         initialMode={authModalMode}
+      />
+
+      <SchedulesModal
+        isOpen={isScheduleModalOpen}
+        onClose={() => setIsScheduleModalOpen(false)}
       />
     </div>
   );

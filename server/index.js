@@ -4,20 +4,28 @@ const cors = require('cors');
 const mongoose = require('mongoose');
 const authRoutes = require('./routes/auth');
 const historyRoutes = require('./routes/history');
+const scheduleRoutes = require('./routes/schedules');
+const { initCronRunner } = require('./services/cronRunner');
 
 const app = express();
 app.use(cors({ origin: ['http://localhost:5173', 'http://localhost:3000'] }));
 app.use(express.json());
+
 app.use('/api/auth', authRoutes);
 app.use('/api/history', historyRoutes);
 app.use('/api/public', require('./routes/public'));
+app.use('/api/schedules', scheduleRoutes);
 
 // 1. Connect to Local MongoDB
 const MONGO_URI = 'mongodb://127.0.0.1:27017/scoutly';
 
 mongoose
   .connect(MONGO_URI)
-  .then(() => console.log(' Connected to Local MongoDB (scoutly)'))
+  .then(() => {
+    console.log(' Connected to Local MongoDB (scoutly)');
+    // Initialize background cron runner once database connection succeeds
+    initCronRunner();
+  })
   .catch((err) => console.error(' MongoDB Connection Error:', err));
 
 const PORT = 5000;
