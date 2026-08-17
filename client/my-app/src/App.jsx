@@ -18,7 +18,8 @@ export default function App() {
   const [isScheduleModalOpen, setIsScheduleModalOpen] = useState(false);
   const [theme, setTheme] = useState(() => {
     return localStorage.getItem('theme') || 'dark';
-  });
+  }); 
+  const [currentReport, setCurrentReport] = useState(null);
 
   const [isBotOpen, setIsBotOpen] = useState(false);
   const [query, setQuery] = useState('');
@@ -107,6 +108,7 @@ export default function App() {
         setHistory((prev) => prev.filter((item) => item._id !== id));
         if (activeReportId === id) {
           setActiveReportId(null);
+          setCurrentReport(null);
           setReport('');
           setCitations({});
         }
@@ -126,6 +128,9 @@ export default function App() {
         setHistory((prev) =>
           prev.map((item) => (item._id === id ? updatedItem : item))
         );
+        if (currentReport && currentReport._id === id) {
+          setCurrentReport(updatedItem);
+        }
       }
     } catch (err) {
       console.error('Failed to toggle pin state:', err);
@@ -167,6 +172,7 @@ export default function App() {
     setQuery(prompt);
     setIsSearching(true);
     setActiveReportId(null);
+    setCurrentReport(null);
     setCitations({});
     const depthLabel = depth === 'quick' ? 'Quick Summary' : 'Deep Dive';
     setCurrentStatus({ phase: 'initializing', message: `Initializing research (${depthLabel})...` });
@@ -228,6 +234,7 @@ export default function App() {
         const saved = await saveToHistory(prompt, accumulatedReport, depth, receivedCitations);
         if (saved && saved._id) {
           setActiveReportId(saved._id);
+          setCurrentReport(saved);
         }
       }
     } catch (error) {
@@ -247,6 +254,7 @@ export default function App() {
         <HistorySidebar
           history={history}
           onSelectReport={(item) => {
+            setCurrentReport(item);
             setQuery(item.query);
             setReport(item.report);
             setCitations(item.citations || {});
@@ -340,9 +348,11 @@ export default function App() {
 
       {isBotOpen && (
         <ScoutlyBot
+          key={currentReport?._id || 'no-report'}
           isOpen={isBotOpen}
           onClose={() => setIsBotOpen(false)}
-          reportContext={report}
+          reportContext={currentReport?.report || ''}
+          reportId={currentReport?._id || null}
         />
       )}
 

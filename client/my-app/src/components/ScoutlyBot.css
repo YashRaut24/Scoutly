@@ -3,11 +3,12 @@
     width: 380px;
     min-width: 320px;
     height: 100vh;
-    background-color: var(--bg-primary);
-    border-left: 1px solid var(--border-color);
+    background-color: #0b0f19;
+    border-left: 1px solid #1e293b;
     display: flex;
     flex-direction: column;
     flex-shrink: 0;
+    /* Prevents the bot panel itself from shrinking */
     box-shadow: -4px 0 20px rgba(0, 0, 0, 0.3);
     font-family: inherit;
 }
@@ -15,11 +16,11 @@
 /* Header */
 .bot-header {
     padding: 16px 20px;
-    border-bottom: 1px solid var(--border-color);
+    border-bottom: 1px solid #1e293b;
     display: flex;
     align-items: center;
     justify-content: space-between;
-    background-color: var(--bg-secondary);
+    background-color: #0d1322;
 }
 
 .bot-header-left {
@@ -29,29 +30,29 @@
 }
 
 .bot-icon {
-    color: var(--accent-primary);
+    color: #818cf8;
 }
 
 .bot-title {
     font-weight: 600;
     font-size: 15px;
-    color: var(--text-main);
+    color: #f8fafc;
 }
 
 .bot-badge {
     font-size: 11px;
-    background-color: var(--pinned-bg);
-    color: var(--accent-primary);
+    background-color: #1e1b4b;
+    color: #a5b4fc;
     padding: 2px 8px;
     border-radius: 12px;
-    border: 1px solid var(--pinned-border);
+    border: 1px solid #3730a3;
     font-weight: 500;
 }
 
 .bot-close-btn {
     background: transparent;
     border: none;
-    color: var(--text-muted);
+    color: #94a3b8;
     cursor: pointer;
     display: flex;
     align-items: center;
@@ -62,8 +63,8 @@
 }
 
 .bot-close-btn:hover {
-    color: var(--text-main);
-    background-color: var(--bg-hover);
+    color: #f8fafc;
+    background-color: #1e293b;
 }
 
 /* Messages Area */
@@ -99,7 +100,7 @@
 }
 
 .chat-bubble.user {
-    background-color: var(--accent-strong);
+    background-color: #4f46e5;
     color: #ffffff;
     padding: 10px 16px;
     border-radius: 18px 18px 2px 18px;
@@ -108,30 +109,30 @@
 
 .chat-bubble.bot {
     background-color: transparent;
-    color: var(--text-main);
+    color: #e2e8f0;
     padding: 0;
     width: 100%;
     max-width: 100%;
 }
 
 .chat-bubble.error {
-    color: var(--danger-text);
-    background-color: var(--danger-bg);
+    color: #f87171;
+    background-color: #2a1215;
     padding: 10px 14px;
     border-radius: 8px;
-    border: 1px solid var(--danger-border);
+    border: 1px solid #7f1d1d;
 }
 
 /* Citations */
 .bot-citations-box {
     margin-top: 12px;
     padding-top: 8px;
-    border-top: 1px solid var(--border-color);
+    border-top: 1px solid #1e293b;
 }
 
 .citations-header {
     font-size: 12px;
-    color: var(--text-muted);
+    color: #94a3b8;
     font-weight: 600;
     margin-bottom: 6px;
 }
@@ -143,7 +144,7 @@
 }
 
 .citation-link {
-    color: var(--accent-primary);
+    color: #3b82f6;
     font-size: 12px;
     display: inline-flex;
     align-items: center;
@@ -160,8 +161,8 @@
     display: inline-flex;
     align-items: center;
     gap: 8px;
-    background-color: var(--bg-hover);
-    color: var(--text-muted);
+    background-color: #1e293b;
+    color: #94a3b8;
     padding: 8px 16px;
     border-radius: 20px;
     font-size: 13px;
@@ -185,35 +186,35 @@
 /* Input Form Footer */
 .bot-input-form {
     padding: 16px;
-    border-top: 1px solid var(--border-color);
+    border-top: 1px solid #1e293b;
     display: flex;
     align-items: center;
     gap: 8px;
-    background-color: var(--bg-primary);
+    background-color: #0b0f19;
 }
 
 .bot-input-field {
     flex: 1;
-    background-color: var(--bg-secondary);
-    border: 1px solid var(--input-border);
+    background-color: #161e2e;
+    border: 1px solid #2d3748;
     border-radius: 8px;
     padding: 10px 14px;
-    color: var(--text-main);
+    color: #f8fafc;
     font-size: 13px;
     outline: none;
     transition: border-color 0.2s ease;
 }
 
 .bot-input-field:focus {
-    border-color: var(--accent-strong);
+    border-color: #4f46e5;
 }
 
 .bot-input-field::placeholder {
-    color: var(--text-subtle);
+    color: #64748b;
 }
 
 .bot-send-btn {
-    background-color: var(--accent-strong);
+    background-color: #4f46e5;
     border: none;
     color: #ffffff;
     width: 38px;
@@ -231,7 +232,132 @@
 }
 
 .bot-send-btn:disabled {
-    background-color: var(--bg-hover);
-    color: var(--text-subtle);
+    background-color: #2d3748;
+    color: #64748b;
     cursor: not-allowed;
+}
+
+/* Header Actions & Toggle Buttons */
+.bot-header-actions {
+    display: flex;
+    align-items: center;
+    gap: 6px;
+}
+
+.bot-action-btn {
+    background: transparent;
+    border: none;
+    color: var(--text-muted);
+    cursor: pointer;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    padding: 5px;
+    border-radius: 6px;
+    transition: all 0.2s ease;
+}
+
+.bot-action-btn:hover,
+.bot-action-btn.active {
+    color: var(--accent-primary);
+    background-color: var(--bg-hover);
+}
+
+/* History Container View */
+.bot-history-container {
+    flex: 1;
+    overflow-y: auto;
+    padding: 16px;
+    display: flex;
+    flex-direction: column;
+    gap: 12px;
+}
+
+.history-header h4 {
+    margin: 0;
+    font-size: 13px;
+    color: var(--text-muted);
+    text-transform: uppercase;
+    letter-spacing: 0.5px;
+}
+
+.empty-history {
+    font-size: 13px;
+    color: var(--text-subtle);
+    font-style: italic;
+    text-align: center;
+    margin-top: 20px;
+}
+
+.history-list {
+    display: flex;
+    flex-direction: column;
+    gap: 8px;
+}
+
+.history-card {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    padding: 10px 12px;
+    border-radius: 8px;
+    background-color: var(--bg-secondary);
+    border: 1px solid var(--border-color);
+    cursor: pointer;
+    transition: all 0.2s ease;
+}
+
+.history-card:hover {
+    border-color: var(--accent-primary);
+    background-color: var(--bg-hover);
+}
+
+.history-card.active {
+    border-color: var(--accent-strong);
+    background-color: var(--pinned-bg);
+}
+
+.history-icon {
+    color: var(--accent-primary);
+    flex-shrink: 0;
+}
+
+.history-info {
+    flex: 1;
+    display: flex;
+    flex-direction: column;
+    overflow: hidden;
+}
+
+.history-title {
+    font-size: 13px;
+    font-weight: 500;
+    color: var(--text-main);
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+}
+
+.history-date {
+    font-size: 11px;
+    color: var(--text-subtle);
+}
+
+.delete-history-btn {
+    background: transparent;
+    border: none;
+    color: var(--danger-text, #ef4444);
+    opacity: 0;
+    cursor: pointer;
+    padding: 4px;
+    border-radius: 4px;
+    transition: opacity 0.2s ease;
+}
+
+.history-card:hover .delete-history-btn {
+    opacity: 1;
+}
+
+.delete-history-btn:hover {
+    background-color: rgba(239, 68, 68, 0.15);
 }

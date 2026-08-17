@@ -6,6 +6,7 @@ const authRoutes = require('./routes/auth');
 const historyRoutes = require('./routes/history');
 const scheduleRoutes = require('./routes/schedules');
 const { initCronRunner } = require('./services/cronRunner');
+const botHistoryRoutes = require('./routes/botHistory');
 
 const app = express();
 app.use(cors({ origin: ['http://localhost:5173', 'http://localhost:3000'] }));
@@ -15,6 +16,7 @@ app.use('/api/auth', authRoutes);
 app.use('/api/history', historyRoutes);
 app.use('/api/public', require('./routes/public'));
 app.use('/api/schedules', scheduleRoutes);
+app.use('/api/bot', botHistoryRoutes);
 
 // 1. Connect to Local MongoDB
 const MONGO_URI = 'mongodb://127.0.0.1:27017/scoutly';
